@@ -1,7 +1,7 @@
 const webs = [
     { id: "Eat",  name: "Eat & Meet", url: "https://eatandmeet.sk/tyzdenne-menu", offline: "../shop/offline/EatAndMeet.html", parser: parseEat },
-    { id: "Rest2", name: "Reštaurácia 2", url: "https://...", offline: "../shop/offline/rest2.html", parser: parseEat },
-    { id: "Rest3", name: "Reštaurácia 3", url: "https://...", offline: "../shop/offline/rest3.html", parser: parseEat },
+    { id: "Fei", name: "Jedáleň na Éčku", url: "https://www.jedalen.stuba.sk/webkredit/Ordering/Menu", offline: "../shop/offline/FeiCanteen.html", parser: parseFei },
+    { id: "Fiit", name: "FiitFood", url: "http://www.freefood.sk/menu/#fiit-food", offline: "../shop/offline/FiitFood.html", parser: parseFiit },
 ];
 
 async function refresh(){
@@ -39,7 +39,7 @@ function parseEat(doc){
             let nameHtml = mealHtml.querySelector(".menu-description .desc").innerHTML;
             let desc = nameHtml.split("<span>");
             let name = desc[0].trim();
-            let alergens = desc[1].substring(0, desc[1].indexOf("<")).replace(/^\D+/g, '');
+            let alergens = desc[1].substring(0, desc[1].indexOf("<")).replace(/^\D+/g, '').replace(')', "");
             
             let typeHtml = mealHtml.querySelector(".menu-title h4").innerHTML.split(" ");
             let type;
@@ -47,22 +47,24 @@ function parseEat(doc){
                 case "MENU":
                 case "ŠALÁT":
                 case "VEGETARIÁNSKE":
+                case "MÚČNE":
+                case "SLADKÉ":
                 default:
                     type = 1;
                     break;
                 case "POLIEVKA":
                     type = 0;
                     break;
-                case "MÚČNE":
-                case "SLADKÉ":
-                    type = 2;
-                    break;
             }   
 
             let priceHtml = mealHtml.querySelector(".price").innerHTML.split(" ");
             let priceStr = priceHtml[0].replace(",", ".");
-            let price = parseFloat(priceStr).toFixed(2);
-            
+            let price = new Array(2);
+            price[1] = parseFloat(priceStr).toFixed(2);
+            priceHtml = mealHtml.querySelector(".price span").innerHTML.split(" ");
+            priceStr = priceHtml[0].replace(",", ".");
+            price[0] = parseFloat(priceStr).toFixed(2);
+
             let imgHtml = mealHtml.parentElement.querySelector(".menu-thumbnail img");
             let img = undefined;
             if (imgHtml != undefined) img = imgHtml.src;
@@ -76,6 +78,113 @@ function parseEat(doc){
     return menuList;
 }
 
+function parseFei(doc){
+    let menuList = [];
+    const table = doc.querySelector('table[data-v-59a167dc]');
+    let menu = [];
+    for (const category of table.querySelectorAll(".table-active"))
+    {   
+        if(category.querySelector("td").textContent.trim()[0] === 'H'){
+            mealHtml = category;
+            menu = [];
+            let type = 0;
+            while(mealHtml.nextElementSibling.querySelector("td span"))
+            {
+                mealHtml = mealHtml.nextElementSibling;
+                let descStr = mealHtml.querySelector("td span").textContent.trim()
+                let name;
+                let alergens;
+            
+                name = descStr.split(", ")[0];
+                
+                let spans = mealHtml.querySelectorAll("td span");
+                let alergensStr = spans[spans.length - 1].textContent;
+                if(alergensStr.indexOf(":") > -1) {
+                    alergens = alergensStr.split(":")[1].trim();
+                }
+                else alergens = "";
+                alergens = alergenParser(alergens);
+
+                name = name.replaceAll("\n", "");
+                name = name.replace(/ +/g, " ").trim();
+
+                let priceHtml = mealHtml.querySelectorAll(".text-right");
+                let price= [];
+                price[0] = parseFloat(priceHtml[0].textContent.trim().split(" ")[0].replace(",", ".")).toFixed(2);
+                price[1] = parseFloat(priceHtml[1].textContent.trim().split(" ")[0].replace(",", ".")).toFixed(2);
+                
+                let meal =new Meal(name, alergens, type, price, null) 
+                menu.push(meal);
+                type = 1;    
+            }
+            menuList.push(menu);
+        }
+    }
+    return menuList;
+}
+
+function alergenParser(alergens){
+    let parts = alergens.split(", ");
+    let out = "";
+    parts.forEach(part => {
+        switch(part){
+            case "lepok":
+                out = out + "1,";
+                break;
+            case "vajcia":
+                out = out + "3,";
+                break;
+            case "ryby":
+                out = out + "4,";
+                break;
+            case "sója":
+                out = out + "6,";
+                break;
+            case "orechy":    
+                out = out + "8,";
+                break;
+            case "mlieko":
+                out = out + "7,";
+                break;
+            case "zeler":
+                out = out + "8,";
+                break;
+            case "horčica":
+                out = out + "10,";
+                break;
+            default:
+                out = out + part + ",";
+                break;
+        }
+    })
+    return out.substring(0,out.length-1);
+}
+
+function parseFiit(doc){
+    const days = doc.querySelectorAll("#fiit-food .daily-offer > li");
+    let menuList = [];
+    for(const day of days){
+        let menu = [];
+        for(const mealHtml of day.querySelectorAll(".day-offer li")){
+            let type = 1;
+            if(mealHtml.textContent.trim()[0] == 'P') type = 0;
+            let priceStr = mealHtml.querySelector(".price").textContent.replace(",", ".").replace("€","");
+            for (const span of mealHtml.querySelectorAll("span")) {span.textContent = "|" + span.textContent + "|";}
+            let desc = mealHtml.textContent.split("|");
+            let descStr = desc[2].replace("(V)", "").split("A:");
+            let name = descStr[0].trim();
+            let alergens = descStr[1].trim();
+            let price = [];
+            price[0] = null;
+            price[1] = parseFloat(priceStr).toFixed(2);
+            let meal = new Meal(name, alergens, type, price, null);
+            menu.push(meal);
+        }
+        menuList.push(menu);
+    }
+    return menuList;
+}
+
 function Meal(name, alergens, type, price, thumbnail){
     this.name = name;
     this.alergens = alergens;
@@ -84,7 +193,9 @@ function Meal(name, alergens, type, price, thumbnail){
     this.thumbnail = thumbnail;
 }
 
-refresh().then(result =>{
-    if (result.status !== "fulfuilled")
-        console.error(result);
+refresh().then(results =>{
+    results.forEach(result => {
+        if (result.status !== "fulfilled")
+            console.error(result);
+    });
 });
