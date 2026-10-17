@@ -1,0 +1,45 @@
+/*
+
+Template: The Zayka - Multipurpose Restaurant, Food & Cafe HTML5 Template
+Author: potenzaglobalsolutions.com
+Version: 1.0  
+Design and Developed by: potenzaglobalsolutions.com
+
+NOTE: This is color stylesheet of Color Scheme.
+
+*/
+
+/*************************
+		General
+*************************/
+/** selection **/
+*::-moz-selection { background: #f26522; color: #fff; text-shadow: none; }
+::-moz-selection { background: #f26522; color: #fff; text-shadow: none; }
+::selection { background: #f26522; color: #fff; text-shadow: none; }
+
+/*.button*/
+ .button, .button.black:before, .button.gray:before { background: #f26522;  }
+ .tp-caption.button, .tp-caption.button.black:before, .tp-caption.button.gray:before { background: #f26522 !important; }
+  .tp-caption.button.white { background: #ffffff !important; }
+ .tp-caption.button.white, .tp-caption.button.white:hover, .tp-caption.button.white:focus, .tp-caption.button.white:before { color: #f26522 !important; }
+
+/*************************
+	 background color
+*************************/
+.orange-bg, .overlay-search .form_search-wrap form .search-close:hover span, .overlay-search .form_search-wrap form .search-input:focus + .search-close span, .section-title h2:before, .owl-carousel[data-dotcolor='white'] .owl-dots .owl-dot.active span, .owl-carousel[data-dotcolor='white'] .owl-dots .owl-dot span:hover, .bootstrap-datetimepicker-widget td.active.active, .bootstrap-datetimepicker-widget td.active.active, .bootstrap-datetimepicker-widget td.active:hover.active, .bootstrap-datetimepicker-widget td span.active.active, .footer .footer-social ul li a:hover, .footer-social .tooltip:after, .footer-social [data-tooltip]:after, .header-2 .mega-menu section.menu-list-items, .team .team-content, .blog-entry-image .entry-date, .owl-carousel.owl-theme .owl-dots .owl-dot.active span, .tags ul li a:hover, .isotope-filters  button.active, .isotope-filters  button:hover, .overlay-content a.portfolio-img i, .footer-4 .footer-social ul li a, .footer-5 .newsletter .newsletter-input i, .progress-bar, .owl-carousel.owl-theme .owl-dots .owl-dot:hover span, .accordion.boxed .acd-heading::before, .accordion.border .acd-active .acd-heading, .pricing-grid .pricing-table.active, .blog-sidebar .sidebar-widget h4:before, .pagination > .active > a, .pagination > .active > a:focus, .pagination > .active > a:hover, .pagination > .active > span, .pagination > .active > span:focus, .pagination > .active > span:hover, .pagination li a:focus, .pagination li a:hover, .pagination li span:focus, .pagination li span:hover, .ares .tp-bullet:hover, .ares .tp-bullet.selected, #back-to-top .top { background: #f26522; }
+
+
+/*************************
+	 color
+*************************/
+.text-orange, .text-orange:hover, .topbar-left ul li i, .topbar ul li a:hover, .mega-menu .menu-links > li.active a, .mega-menu .menu-links > li.active .drop-down-multilevel a:hover, .mega-menu .menu-links > li > a:hover, .mega-menu .drop-down-multilevel li:hover > a, .mega-menu .drop-down a:hover, .mega-menu .drop-down-tab-bar a:hover, .buttons a, .menu-body.menu-left .menu-details .price, .menu-body .menu-details .price, .pricing-grid .pricing-table .pricing-title strong, .tabs ul.tabs-link li a:hover, .our-menu  .tabs ul.tabs-link li.active a, .contact-form .form-field i, table tr td a, .testimonial-info strong, .newsletter-section .button.black:hover, .newsletter-section .button.black:focus, .footer .newsletter .newsletter-input i, .footer-bottom p a, .mega-menu.dark .menu-links > li.active .drop-down-multilevel a:hover, .entry-meta a i, .entry-title a:hover, .entry-meta a:hover, .entry-description a, .footer-2 .contact i, .footer-3 .footer-bottom a:hover, .header-3 .mega-menu .menu-links > li.active > a, .header-4 .mega-menu .menu-links > li > a:hover, .head-info h6, .head-info-content .info-right .address > a, .head-info a:hover, .header-4 .mega-menu .menu-links > li.active > a, .header-4 .mega-menu .menu-links > li > a:hover, .overlay-content a:hover, .footer-4 .fooer-links a:hover, .header-5 .mega-menu .menu-links > li.active .drop-down-multilevel a:hover, ul.page-breadcrumb li a:hover, .custom-content span, .custom-content i, .tab-page .tabs ul.tabs-link.white li.active a, .pricing-grid .pricing-table.active .button.gray:hover, blockquote cite, .list li i, .blog-sidebar .widget-link ul li a:hover, .blog-sidebar .recent-post-info a:hover, .button-arrow, .blog-entry .social ul li a, .contact .contact-box i, .table-info .contact-box-left .icon i, .mega-menu .menu-links li a.active, .header-3 .mega-menu .menu-links li a.active, .header-4 .mega-menu .menu-links li a.active, .mega-menu .drop-down-multilevel li a.active i.fa, .mega-menu .drop-down-multilevel li:hover > a i.fa { color: #f26522 }
+
+ 
+/*************************
+	 border color
+*************************/
+.overlay-search .form_search-wrap form .search-input:focus, .reservation-form.contact-form .form-field input:focus, .reservation-form.contact-form .form-field textarea:focus, .blog-entry-image .entry-date, .contact-form .form-field input:focus, .contact-form .form-field textarea:focus, .tags ul li a:hover, .footer-3  .tags ul li a:hover, .footer-5 .newsletter .newsletter-input input:focus, .accordion.border .acd-active .acd-heading, .blog-sidebar .widget-search input:focus, .blog-sidebar .widget-link ul li a:hover, .pagination > .active > a, .pagination > .active > a:focus, .pagination > .active > a:hover, .pagination > .active > span, .pagination > .active > span:focus, .pagination > .active > span:hover, .pagination li a:focus, .pagination li a:hover, .pagination li span:focus, .pagination li span:hover, .reservation .select-styled.active, .coming-soon .coming-soon-search input:focus { border-color: #f26522 }
+
+.footer-social [data-tooltip]:before, .footer-social .tooltip:before, .footer-social .tooltip-top:before { border-top-color: #f26522; }
+.select-styled:active:after, .select-styled.active:after { border-color: transparent transparent #f26522 transparent; }
+
