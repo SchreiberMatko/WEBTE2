@@ -1,7 +1,7 @@
 const webs = [
-    { id: "Eat",  name: "Eat & Meet", url: "https://eatandmeet.sk/tyzdenne-menu", offline: "../shop/offline/EatAndMeet.html", parser: parseEat },
-    { id: "Fei", name: "Jedáleň na Éčku", url: "https://www.jedalen.stuba.sk/webkredit/Ordering/Menu", offline: "../shop/offline/FeiCanteen.html", parser: parseFei },
-    { id: "Fiit", name: "FiitFood", url: "http://www.freefood.sk/menu/#fiit-food", offline: "../shop/offline/FiitFood.html", parser: parseFiit },
+    { id: "Eat",  name: "Eat & Meet", url: "http://localhost:8020/proxy/tyzdenne-menu", offline: "../shop/offline/EatAndMeet.html", parser: parseEat },
+    { id: "Fei", name: "Jedáleň na Éčku", url: "http://localhost:8010/fei-menu/webkredit/Api/Ordering/Menu", offline: "../shop/offline/FeiCanteen.html", parser: parseFei },
+    { id: "Fiit", name: "FiitFood", url: "http://localhost:8030/proxy/menu/#fiit-food", offline: "../shop/offline/FiitFood.html", parser: parseFiit },
 ];
 
 async function refresh(){
@@ -9,21 +9,45 @@ async function refresh(){
 
     results.forEach((res, i) => {
         if(res.status != "fulfilled") console.error("restaurnat: " + webs[i].name + " failed to load; " + res.reason.message);
-    })
-    localStorage.setItem("LastRefresh", new Date());
+    });
+    localStorage.LastRefresh = new Date();
+    //localStorage.setItem("LastRefresh", JSON.stringify(new Date()));
     return results;
 }
 
-async function fetchWeb(web) {
-    return fetch(web.offline)
+async function fetchWeb(web) {  
+    let requestUrl = web.url;
+    if(web.id == "Fei"){
+        const params = new URLSearchParams();
+        const days = [
+            "2026-10-18T22:00:00.000Z",
+            "2026-10-19T22:00:00.000Z",
+            "2026-10-20T22:00:00.000Z",
+            "2026-10-21T22:00:00.000Z",
+            "2026-10-22T22:00:00.000Z"
+        ];
+        days.forEach(day => params.append("Dates", day));
+        params.append("CanteenId", "6");
+        
+        requestUrl = `${web.url}?${params.toString()}`;
+    }
+
+    const offline = () => fetch(web.offline).then(r => {
+        if (!r.ok) throw new Error("Could not load " + web.name + " " + r.status);
+        return r.text();
+    });
+
+    return fetch(requestUrl)
     .then(res => {
-        if (!res.ok) throw new Error("Could not load " + web.name + res.status);
-        return res.text();
+        if (!res.ok) {
+            return offline();
+        }
+        return(res.message);
     })
+    .catch(offline)
     .then(htmlString => {
         const parser = new DOMParser();
         const doc = parser.parseFromString(htmlString, 'text/html');
-
         const menuList = web.parser(doc);
         localStorage.setItem("Menu" + web.id, JSON.stringify(menuList));
         return menuList;
@@ -193,13 +217,15 @@ function Meal(name, alergens, type, price, thumbnail){
     this.thumbnail = thumbnail;
 }
 
-refresh().then(results =>{
-    results.forEach(result => {
-        if (result.status !== "fulfilled")
-            console.error(result);
-    });
+webs.forEach(web => {
+    const now = new Date();
+    if (localStorage.getItem("Menu" + web.id) == undefined || new Date(localStorage.LastRefresh).getDay() < now.getDay()){
+        refresh().then(results =>{
+            results.forEach(result => {
+                if (result.status !== "fulfilled")
+                    console.error(result);
+            });
+        });
+    }
 });
 
-webs.forEach(web => {
-    console.log(localStorage.getItem("Menu" + web.id));
-})
