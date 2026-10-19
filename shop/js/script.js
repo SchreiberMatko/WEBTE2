@@ -24,9 +24,9 @@ async function fetchWeb(web) {
         const parser = new DOMParser();
         const doc = parser.parseFromString(htmlString, 'text/html');
 
-        const menuListEat = web.parser(doc);
-        localStorage.setItem("menuEat", menuListEat);
-        return menuListEat;
+        const menuList = web.parser(doc);
+        localStorage.setItem("Menu" + web.id, JSON.stringify(menuList));
+        return menuList;
     });
 }
 
@@ -199,3 +199,7 @@ refresh().then(results =>{
             console.error(result);
     });
 });
+
+webs.forEach(web => {
+    console.log(localStorage.getItem("Menu" + web.id));
+})
