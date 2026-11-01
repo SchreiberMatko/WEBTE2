@@ -1,0 +1,64 @@
+showLastRefresh() in shop/js/script.js: your version (-) and the proposed one (+)
+
+What changes:
+1. The loop that removed aria-pressed from every day tab on each refresh is gone. That loop,
+   plus pressing Monday again at the end, is why the tab jumped back to Monday after
+   "Aktualizovat menu" while the table stayed on the chosen day.
+2. Today is compared by the full date (toDateString), not only the day of the month
+   (getDate: 3 October would match 3 November).
+3. The "today" mark (aria-current="date") goes on the button (.day) and on the day title in
+   the table (th), where styles.css looks for it, not on the <time> inside.
+   It is also removed from the other days, so "dnes" no longer sticks to Monday.
+4. A day is chosen only when no tab is pressed yet (the first time): today, or Monday if
+   today is not in the week. The tab and data-day on .board are set together, so the tab and
+   the table always show the same day.
+
+Apply it:  git apply showLastRefresh.diff     (then delete this file)
+
+diff --git a/shop/js/script.js b/shop/js/script.js
+index 1ae1b34..d8fa1b0 100644
+--- a/shop/js/script.js
++++ b/shop/js/script.js
+@@ -43,20 +43,21 @@ function showLastRefresh(){
+         monday.setDate(monday.getDate()+offset);
+     }
+     let daysHtml = document.querySelectorAll(".day__date");
+-    for(const dayHtml of daysHtml){dayHtml.parentElement.removeAttribute("aria-pressed");}
+     let daysTable = document.querySelectorAll(".menu-table__day-title time");
+-    let found = false;
++    let today = -1;
+     for(let i = 0; i<5; i++){
+         daysHtml[i].setAttribute("datetime", `${monday.getFullYear()}-${monday.getMonth()+1}-${monday.getDate()}`);
+         daysHtml[i].textContent = `${monday.getDate()}. ${monday.getMonth()+1}.`;
+         daysTable[i].setAttribute("datetime", `${monday.getFullYear()}-${monday.getMonth()+1}-${monday.getDate()}`);
+         daysTable[i].textContent = `${monday.getDate()}. ${monday.getMonth()+1}.`;
+ 
+-        if(new Date().getDate() == monday.getDate()){
+-            daysHtml[i].setAttribute("aria-pressed", "true");
+-            daysHtml[i].setAttribute("aria-current", "date");
+-            found = true;
++        // "dnes" on the tab and on the day title in the table (the CSS looks for it on both)
++        const isToday = new Date().toDateString() == monday.toDateString();
++        for (const el of [daysHtml[i].parentElement, daysTable[i].parentElement]){
++            if (isToday) el.setAttribute("aria-current", "date");
++            else el.removeAttribute("aria-current");
+         }
++        if (isToday) today = i;
+         monday.setDate(monday.getDate()+1);
+     }
+     monday.setDate(monday.getDate()-1);
+@@ -64,7 +65,13 @@ function showLastRefresh(){
+     monday.setDate(monday.getDate()-4);
+ 
+     daysHtml[5].textContent = `${monday.getDate()}. ${monday.getMonth()+1} - ${friday[0]}. ${friday[1]}.`;
+-    if(!found) daysHtml[0].parentElement.setAttribute("aria-pressed", "true");
++
++    // Choose a day only the first time; a later refresh keeps the day the user picked
++    if (!document.querySelector('.day[aria-pressed="true"]')){
++        const tab = daysHtml[today >= 0 ? today : 0].parentElement;
++        tab.setAttribute("aria-pressed", "true");
++        document.querySelector(".board").dataset.day = tab.dataset.day;
++    }
+     
+ }
+ 

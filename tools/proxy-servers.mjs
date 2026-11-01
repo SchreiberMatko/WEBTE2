@@ -1,5 +1,5 @@
 // Starts the CORS proxies the menu page fetches through, one for every restaurant in `webs`
-// (shop/js/script.js): the port and the path prefix come from its url, the real site from
+// (js/script.js): the port and the path prefix come from its url, the real site from
 // `targets` below. It runs local-cors-proxy (npm install -g local-cors-proxy, the `lcp` command).
 // The VS Code task "Proxy servery pre menu" starts it when the folder opens (.vscode/tasks.json),
 // so it is running before Live Server; by hand: node tools/proxy-servers.mjs. Ctrl+C stops all.
@@ -15,13 +15,13 @@ const targets = {
     Fiit: "http://www.freefood.sk",
 };
 
-const scriptJs = readFileSync(fileURLToPath(new URL("../shop/js/script.js", import.meta.url)), "utf8");
+const scriptJs = readFileSync(fileURLToPath(new URL("../js/script.js", import.meta.url)), "utf8");
 const webs = [...scriptJs.matchAll(/id:\s*"([^"]+)"[^}]*?url:\s*"([^"]+)"/g)]
     .map(([, id, url]) => ({ id, url: new URL(url) }))
     .filter(web => ["localhost", "127.0.0.1"].includes(web.url.hostname));
 
 if (!webs.length){
-    console.error("V shop/js/script.js som nenašiel žiadne webs s adresou na localhost.");
+    console.error("V js/script.js som nenašiel žiadne webs s adresou na localhost.");
     process.exit(1);
 }
 
