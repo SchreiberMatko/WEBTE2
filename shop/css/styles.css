@@ -403,6 +403,99 @@ body:has(.loader:not([hidden])) .logo .mill,
   line-height: 1.5;
 }
 
+.site-footer__end {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-xs) var(--space-lg);
+}
+
+/* Clearing the saved data: a quiet text button like the footer link; it removes nothing before
+   the dialog below is confirmed, and the line next to it says when it is done */
+.site-footer__clear {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.5rem;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
+  cursor: pointer;
+  transition: opacity var(--transition);
+}
+
+@media (hover: hover) {
+  .site-footer__clear:hover {
+    opacity: var(--hover-opacity);
+  }
+}
+
+.site-footer__status:not(:empty) {
+  margin-left: var(--space-sm);
+  color: var(--color-text);
+}
+
+/* Confirmation dialog (native <dialog>): the black marker line on top, centred over a veil of
+   the page colour, rises in a little when it opens */
+.dialog {
+  width: min(30rem, calc(100% - 2 * var(--edge)));
+  padding: var(--space-lg);
+  border: 0;
+  border-top: var(--marker) solid var(--color-text);
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  box-shadow: 0 1.25rem 3rem rgb(0 0 0 / 0.2);
+}
+
+.dialog::backdrop {
+  background-color: color-mix(in srgb, var(--color-bg) 75%, transparent);
+}
+
+.dialog[open] {
+  transition:
+    opacity var(--duration-state) var(--ease-out),
+    transform var(--duration-state) var(--ease-out);
+}
+
+.dialog[open]::backdrop {
+  transition: background-color var(--duration-state) var(--ease-out);
+}
+
+@starting-style {
+  .dialog[open] {
+    opacity: 0;
+    transform: translateY(0.5rem);
+  }
+
+  .dialog[open]::backdrop {
+    background-color: transparent;
+  }
+}
+
+.dialog__title {
+  font-size: var(--font-size-lg);
+}
+
+.dialog__text {
+  margin-top: var(--space-sm);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+  line-height: 1.5;
+}
+
+.dialog__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-xs);
+  margin-top: var(--space-lg);
+}
+
 /* Main content */
 
 .main {

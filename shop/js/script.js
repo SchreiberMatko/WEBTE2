@@ -4,6 +4,7 @@ const webs = [
     { id: "Fiit", name: "FiitFood", url: "http://localhost:8030/proxy/menu/#fiit-food", offline: "../shop/offline/FiitFood.html", parser: parseFiit },
 ];
 
+
 const localLastRefresh = new Date("November 1, 2026, 13:00")
 
 async function refresh(){
@@ -16,6 +17,7 @@ async function refresh(){
     });
     localStorage.setItem("LastRefresh", new Date().toISOString());
     showLastRefresh();
+    showMenus();
     return results;
 }
 
@@ -28,7 +30,8 @@ function showLastRefresh(){
     time.textContent = date.toLocaleString("sk-SK");
 }
 
-async function fetchWeb(web) {  
+async function fetchWeb(web) {
+    let localCopy = false;  
     let requestUrl = web.url;
     if(web.id == "Fei"){
         const params = new URLSearchParams();
@@ -46,7 +49,10 @@ async function fetchWeb(web) {
     }
 
     const offline = () => fetch(web.offline).then(r => {
-        if (!r.ok) throw new Error("Could not load " + web.name + " " + r.status);
+        localCopy = true;
+        if (!r.ok) {
+            throw new Error("Could not load " + web.name + " " + r.status);
+        }    
         return r.text();
     });
 
@@ -55,14 +61,14 @@ async function fetchWeb(web) {
         if (!res.ok) {
             return offline();
         }
-        return(res.message);
+        return(res.text());
     })
     .catch(offline)
     .then(htmlString => {
         const parser = new DOMParser();
         const doc = parser.parseFromString(htmlString, 'text/html');
         const menuList = web.parser(doc);
-        localStorage.setItem("Menu" + web.id, JSON.stringify(menuList));
+        localStorage.setItem("Menu" + web.id,"Local copy: " + localCopy + ":|:" + JSON.stringify(menuList));
         return menuList;
     });
 }
@@ -80,7 +86,10 @@ function parseEat(doc){
             
             let typeHtml = mealHtml.querySelector(".menu-title h4").innerHTML.split(" ");
             let type;
-            switch(typeHtml[0].trim()){
+            switch(typeHtml[0].trim().toUpperCase()){
+                case "POLIEVKA":
+                    type = 0;
+                    break;
                 case "MENU":
                 case "ŠALÁT":
                 case "VEGETARIÁNSKE":
@@ -88,9 +97,6 @@ function parseEat(doc){
                 case "SLADKÉ":
                 default:
                     type = 1;
-                    break;
-                case "POLIEVKA":
-                    type = 0;
                     break;
             }   
 
@@ -184,7 +190,7 @@ function alergenParser(alergens){
                 out = out + "7,";
                 break;
             case "zeler":
-                out = out + "8,";
+                out = out + "9,";
                 break;
             case "horčica":
                 out = out + "10,";
@@ -212,8 +218,8 @@ function parseFiit(doc){
             let name = descStr[0].trim();
             let alergens = descStr[1].trim();
             let price = [];
-            price[0] = null;
             price[1] = parseFloat(priceStr).toFixed(2);
+            price[0] = parseFloat(priceStr).toFixed(2);
             let meal = new Meal(name, alergens, type, price, null);
             menu.push(meal);
         }
@@ -230,6 +236,91 @@ function Meal(name, alergens, type, price, thumbnail){
     this.thumbnail = thumbnail;
 }
 
+async function resetMenuTable(){
+    const html = await fetch("index.html").then(r => r.text());
+    const doc = new DOMParser().parseFromString(html, "text/html");
+    document.querySelector(".menu-table").replaceWith(doc.querySelector(".menu-table"));
+}
+
+function showMenus(){
+    if(document.title !== "Obedové menu v okolí fakulty") return;
+    resetMenuTable().then(show => {
+        webs.forEach(web => {
+            const days = document.querySelectorAll("[data-type='0']")
+            const menu = localStorage.getItem("Menu" + web.id);
+            if(menu == undefined){
+                for (const day of days){
+                    let first = day.querySelector(`[data-restaurant='${web.id}']`);
+                    first.classList.add("menu-empty");
+                    first.innerHTML = "";
+                    const span = document.createElement("span");
+                    span.classList.add("menu-empty__text");
+                    span.innerHTML = "V tento deň jedáleň menu nevydáva";
+                    first.appendChild(span);        
+                }
+            }
+            else{
+                const menuParts = menu.split(":|:");
+                const localCopy = menuParts[0].split(": ");
+                if(localCopy[1] === "true") {
+                    const restaurantMeta = document.querySelector(`[data-restaurant='${web.id}'] .restaurant__meta`)
+                    let tag = document.createElement("span");
+                    tag.classList.add("tag");
+                    tag.textContent = "Lokálna kópia ";
+                    let tagDate = document.createElement("time");
+                    tagDate.classList.add("tag__date");
+                    tagDate.setAttribute("datetime", `${localLastRefresh.getFullYear()}-${localLastRefresh.getMonth()}-${localLastRefresh.getDay()}`);
+                    tagDate.textContent = `${localLastRefresh.getDate()}. ${localLastRefresh.getMonth()+1}.`;
+                    tag.appendChild(tagDate);
+                    restaurantMeta.appendChild(tag);
+                }
+                menuData = JSON.parse(menuParts[1]);
+                for(let i = 0; i<5; i++){
+                    menuDay = menuData[i] ? menuData[i]: [];
+                    let containers =  [days[i], days[i].nextElementSibling];
+                    let mealCount = [containers[0].childElementCount -1,  containers[1].childElementCount - 1];
+                    for(const meal of menuDay){
+                        let type = meal.type;
+                        if (mealCount[type] == 0){
+                            let tableRow = document.createElement("tr");
+                            for(const web of webs){
+                                let tableData = document.createElement("td");
+                                tableData.setAttribute("data-restaurant", web.id);
+                                tableRow.appendChild(tableData);
+                            }
+                            containers[type].appendChild(tableRow);
+                            mealCount[type]++;
+                        }
+                        
+                        let mealItem = containers[type].children.item(containers[type].childElementCount - mealCount[type]).querySelector(`[data-restaurant='${web.id}']`);
+                        mealItem.classList.add("meal");
+                        if(type == 0) mealItem.classList.add("meal--soup");
+
+                        price = meal.price[0] + "&nbsp;€";
+                        if(type == 0 && parseFloat(meal.price[0].replace(",", ".")) == 0.0){
+                            price = "v cene menu";
+                        }
+                        let fullPrice = (meal.price[1] != null && type == 1) ? "plná " + meal.price[1] + "&nbsp;€": "";
+                        const stringData = `
+                            <div class="meal__body">
+                                <p class="meal__name">${meal.name}</p>
+                                <p class="meal__details"><span><abbr title="alergény">A</abbr> ${meal.alergens}</span></p>
+                                <p class="meal__price">
+                                    <data value="${parseFloat(meal.price[0].replace(",", "."))}">${price}</data>
+                                    <small class="meal__price-alt">${fullPrice}</small>
+                                </p>
+                            </div>
+                        `;
+
+                        mealItem.insertAdjacentHTML("beforeend", stringData);   
+                        mealCount[type] --;
+                    } 
+                }   
+            }
+        });
+    });
+}
+
 showLastRefresh();
 showMenus();
 window.addEventListener("storage", e => {
@@ -237,7 +328,7 @@ window.addEventListener("storage", e => {
     if (e.key == "MenuFiit" || e.key == "MenuFei"|| e.key == "MenuEat") showMenus();
 });
 
-/*webs.forEach(web => {
+webs.forEach(web => {
     const now = new Date();
     if (localStorage.getItem("Menu" + web.id) == undefined || new Date(localStorage.LastRefresh).getDay() < now.getDay()){
         refresh().then(results =>{
@@ -247,5 +338,5 @@ window.addEventListener("storage", e => {
             });
         });
     }
-});*/
+});
 
