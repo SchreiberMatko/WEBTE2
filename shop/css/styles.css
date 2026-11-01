@@ -847,6 +847,20 @@ td {
     right: 0;
     left: 0;
   }
+
+  /* In the week view the next day follows right under the column's empty cells, often closer
+     than the sentence and its logo reach (a day with few dishes). There the sentence takes the
+     label's place and looks like the label, without the logo, so every day ends where its rows end. */
+  :where(.main:has(.segmented__option--all :checked)) .board[data-day="week"] .menu-empty__text {
+    position: static;
+    font: inherit;
+    letter-spacing: inherit;
+    text-transform: inherit;
+  }
+
+  :where(.main:has(.segmented__option--all :checked)) .board[data-day="week"] .menu-empty__text::after {
+    display: none;
+  }
 }
 
 tbody:has(.menu-empty[data-restaurant="Eat"]) + tbody .menu-table__label[data-restaurant="Eat"],

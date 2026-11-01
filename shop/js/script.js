@@ -1,13 +1,17 @@
 const webs = [
-    { id: "Eat",  name: "Eat & Meet", url: "http://localhost:8020/proxy/tyzdenne-menu", offline: "../shop/offline/EatAndMeet.html", parser: parseEat },
-    { id: "Fei", name: "Jedáleň na Éčku", url: "http://localhost:8010/fei-menu/webkredit/Api/Ordering/Menu", offline: "../shop/offline/FeiCanteen.html", parser: parseFei },
-    { id: "Fiit", name: "FiitFood", url: "http://localhost:8030/proxy/menu/#fiit-food", offline: "../shop/offline/FiitFood.html", parser: parseFiit },
+    {no: 0, id: "Eat",  name: "Eat & Meet", url: "http://localhost:8020/proxy/tyzdenne-menu", offline: "../shop/offline/EatAndMeet.html", parser: parseEat },
+    {no: 1, id: "Fei", name: "Jedáleň na Éčku", url: "http://localhost:8010/fei-menu/webkredit/Api/Ordering/Menu", offline: "../shop/offline/FeiCanteen.html", parser: parseFei },
+    {no: 2, id: "Fiit", name: "FiitFood", url: "http://localhost:8030/proxy/menu/#fiit-food", offline: "../shop/offline/FiitFood.html", parser: parseFiit },
 ];
 
 
-const localLastRefresh = new Date("November 1, 2026, 13:00")
+const localLastRefresh = [new Date("November 1, 2026, 13:00"),//eat
+                          new Date("November 1, 2026, 13:00"),//fei
+                          new Date("October 26, 2026, 13:00")//fiit
+]; 
 
 async function refresh(){
+    document.querySelector(".loader").removeAttribute("hidden");
     const results = await Promise.allSettled(webs.map(fetchWeb));
 
     results.forEach((res, i) => {
@@ -16,8 +20,8 @@ async function refresh(){
         }
     });
     localStorage.setItem("LastRefresh", new Date().toISOString());
-    showLastRefresh();
     showMenus();
+    document.querySelector(".loader").setAttribute("hidden", "true");
     return results;
 }
 
@@ -28,6 +32,37 @@ function showLastRefresh(){
     if (!time) return; // O projekte has no update time
     time.dateTime = date.toISOString();
     time.textContent = date.toLocaleString("sk-SK");
+    const monday = date;
+    let offset = -1;
+    if (monday.getDay() == 0 || monday.getDay() == 6 || (monday.getDay() == 5 && monday.getHours() > 15)){
+        offset = 1;
+    }
+    while(monday.getDay() != 1){
+        monday.setDate(monday.getDate()+offset);
+    }
+    let daysHtml = document.querySelectorAll(".day__date");
+    let daysTable = document.querySelectorAll(".menu-table__day-title time");
+    let found = false;
+    for(let i = 0; i<5; i++){
+        daysHtml[i].setAttribute("datetime", `${monday.getFullYear()}-${monday.getMonth()+1}-${monday.getDate()}`);
+        daysHtml[i].textContent = `${monday.getDate()}. ${monday.getMonth()+1}.`;
+        daysTable[i].setAttribute("datetime", `${monday.getFullYear()}-${monday.getMonth()+1}-${monday.getDate()}`);
+        daysTable[i].textContent = `${monday.getDate()}. ${monday.getMonth()+1}.`;
+
+        if(new Date().getDate() == monday.getDate()){
+            daysHtml[i].setAttribute("presed", "true");
+            daysHtml[i].setAttribute("aria-current", "date");
+            found = true;
+        }
+        monday.setDate(monday.getDate()+1);
+    }
+    monday.setDate(monday.getDate()-1);
+    let friday = [monday.getDate(), monday.getMonth()+1];
+    monday.setDate(monday.getDate()-4);
+
+    daysHtml[5].textContent = `${monday.getDate()}. ${monday.getMonth()+1} - ${friday[0]}. ${friday[1]}.`;
+    if(!found) daysHtml[0].parentElement.setAttribute("aria-pressed", "true");
+    
 }
 
 async function fetchWeb(web) {
@@ -115,8 +150,8 @@ function parseEat(doc){
             let meal = new Meal(name, alergens, type,price,img);
             menu.push(meal);
         }
-        menu = [];
         menuList.push(menu);
+        menu = [];
     } 
     return menuList;
 }
@@ -244,6 +279,7 @@ async function resetMenuTable(){
 
 function showMenus(){
     if(document.title !== "Obedové menu v okolí fakulty") return;
+    document.querySelector(".loader").removeAttribute("hidden");
     resetMenuTable().then(show => {
         webs.forEach(web => {
             const days = document.querySelectorAll("[data-type='0']")
@@ -269,8 +305,8 @@ function showMenus(){
                     tag.textContent = "Lokálna kópia ";
                     let tagDate = document.createElement("time");
                     tagDate.classList.add("tag__date");
-                    tagDate.setAttribute("datetime", `${localLastRefresh.getFullYear()}-${localLastRefresh.getMonth()}-${localLastRefresh.getDay()}`);
-                    tagDate.textContent = `${localLastRefresh.getDate()}. ${localLastRefresh.getMonth()+1}.`;
+                    tagDate.setAttribute("datetime", `${localLastRefresh[web.no].getFullYear()}-${localLastRefresh[web.no].getMonth()+1}-${localLastRefresh[web.no].getDate()}`);
+                    tagDate.textContent = `${localLastRefresh[web.no].getDate()}. ${localLastRefresh[web.no].getMonth()+1}.`;
                     tag.appendChild(tagDate);
                     restaurantMeta.appendChild(tag);
                 }
@@ -318,10 +354,11 @@ function showMenus(){
                 }   
             }
         });
+    showLastRefresh();
+    document.querySelector(".loader").setAttribute("hidden", "true");
     });
 }
 
-showLastRefresh();
 showMenus();
 window.addEventListener("storage", e => {
     if (e.key == "LastRefresh") showLastRefresh();
