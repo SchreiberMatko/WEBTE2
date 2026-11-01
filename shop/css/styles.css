@@ -1,57 +1,1505 @@
+/* Obedové menu v okolí fakulty – shared styles for index.html and o-projekte.html.
+   Monochrome look taken from the WEBTE1 site: LexendZetta headings, Roboto text,
+   hairlines and black marker lines instead of colors. */
+
+@font-face {
+  font-family: "Roboto";
+  src: url("../fonts/Roboto.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "LexendZetta";
+  src: url("../fonts/LexendZetta.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
-    --color-brand: #1d6f8a;
-    --color-accent: #d9480f;
-    --color-muted: #eef3f6;
-    --radius: 0.5rem;
-    --space: 1rem;
+  color-scheme: light dark;
+  --color-text: #111111;
+  --color-text-muted: #595959;
+  --color-bg: #ffffff;
+  --color-surface: #f2f2f2;
+  --color-line: #888888;
+  --color-line-light: #e5e5e5;
+
+  --font-body: "Roboto", sans-serif;
+  --font-display: "LexendZetta", sans-serif;
+  --font-size-xs: 0.6875rem;
+  --font-size-sm: 0.8125rem;
+  --font-size-base: 1rem;
+  --font-size-lg: 1.125rem;
+
+  --space: 1rem;
+  --space-xs: calc(var(--space) / 4);
+  --space-sm: calc(var(--space) / 2);
+  --space-lg: calc(var(--space) * 2);
+
+  --edge: 32px;
+  --target: 2.75rem;
+  --marker: 2px;
+  --hover-opacity: 0.58;
+  --transition: 150ms ease-out;
+
+  /* Motion: things arrive with a soft stop, leave quickly, travel with ease-in-out
+     (js/motion.js reads the curves from here too) */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-exit: cubic-bezier(0.55, 0.055, 0.675, 0.19);
+  --ease-in-out: cubic-bezier(0.76, 0, 0.24, 1);
+  --duration-press: 140ms;
+  --duration-exit: 120ms;
+  --duration-state: 240ms;
+}
+
+/* Dark mode, from the system setting: not pure black but a very dark espresso brown, with warm
+   greys around it, so it belongs with the brown mill of the logo. Everything else follows these
+   tokens; the black marker lines become the light text colour. */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-text: #f2ebe4;
+    --color-text-muted: #ab9d90;
+    --color-bg: #140900;
+    --color-surface: #22170e;
+    --color-line: #75665a;
+    --color-line-light: #34281e;
   }
-  
-  main {
-    max-width: 700px;
-    margin: 0 auto;
-    padding: var(--space);
-    font-family: system-ui, sans-serif;
+}
+
+/* Base */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+body {
+  margin: 0;
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  font-size: var(--font-size-base);
+  line-height: 1.5;
+}
+
+h1,
+h2,
+h3 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 400;
+  line-height: 1.25;
+  text-transform: uppercase;
+  overflow-wrap: break-word;
+}
+
+p {
+  margin: 0;
+}
+
+a {
+  color: inherit;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
+  transition: opacity var(--transition);
+}
+
+/* Hover only where there is a mouse: a tap would leave it stuck on touch screens */
+@media (hover: hover) {
+  a:hover {
+    opacity: var(--hover-opacity);
   }
-  
-  .products {
+}
+
+abbr[title] {
+  text-decoration: none;
+}
+
+code {
+  padding: 0 var(--space-xs);
+  background-color: var(--color-surface);
+  font-family: var(--font-body);
+  font-size: 0.9em;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-text);
+  outline-offset: 3px;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.icon {
+  flex: none;
+  width: 1rem;
+  height: 1rem;
+}
+
+/* Page shell: navigation on top, content across the whole screen width */
+
+.app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.site-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space);
+  padding: 24px var(--edge) 0;
+}
+
+/* Logo (logo.svg written into the page, favicon.svg stays the browser tab icon): top right corner
+   next to the navigation, on small phones in the footer. Inline, so it takes the text colour in
+   both themes and its brown mill can turn: while the menu loads, or under the pointer. */
+
+.brand {
+  display: block;
+  flex-shrink: 0;
+  width: var(--target);
+  height: var(--target);
+}
+
+.logo {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.logo .mill {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+body:has(.loader:not([hidden])) .logo .mill,
+.brand:hover .logo .mill {
+  animation: mill 1.4s linear infinite;
+}
+
+@keyframes mill {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.site-footer__logo {
+  display: none;
+}
+
+/* Navigation: unordered list on a gray line, current page marked in black (like the WEBTE1 top links) */
+
+.nav__list {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0 var(--space-lg);
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--color-line);
+  list-style: none;
+}
+
+.nav__link {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-height: var(--target);
+  font-size: var(--font-size-xs);
+  letter-spacing: 0.08em;
+  text-decoration: none;
+  text-transform: uppercase;
+}
+
+.nav__link[aria-current="page"]::before {
+  content: "";
+  position: absolute;
+  top: -2px;
+  right: 0;
+  left: 0;
+  border-top: 3px solid var(--color-text);
+}
+
+/* Restaurant filter: all restaurants or one of them, only one choice at a time */
+
+.segmented {
+  --segment-height: var(--target);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+/* One option is one button: the <label> is the box, the invisible radio inside it covers it,
+   so a click anywhere on the box chooses it and the keyboard still reaches the radio.
+   "All restaurants" is as wide as its text allows, never past 13rem (wide screens stretch it). */
+.segmented__option {
+  position: relative;
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  justify-content: center;
+  max-width: 13rem;
+  min-height: var(--segment-height);
+  padding: 0 0.875rem;
+  text-align: center;
+  border: 1px solid var(--color-line);
+  font-size: var(--font-size-xs);
+  letter-spacing: 0.06em;
+  line-height: 1.3;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition:
+    opacity var(--transition),
+    background-color var(--transition),
+    border-color var(--transition),
+    color var(--transition);
+}
+
+.segmented__input {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+@media (hover: hover) {
+  .segmented__option:hover {
+    opacity: var(--hover-opacity);
+  }
+}
+
+.segmented__option:has(.segmented__input:checked) {
+  border-color: var(--color-text);
+  background-color: var(--color-text);
+  color: var(--color-bg);
+}
+
+.segmented__option:has(.segmented__input:focus-visible) {
+  outline: 2px solid var(--color-text);
+  outline-offset: 3px;
+}
+
+/* The restaurants: one row across the whole filter, each button as wide as its name in
+   proportion to the others (an auto table hands the spare width out by text width).
+   The border-spacing also lands on the outer edges, the negative margin takes it back. */
+.segmented__row {
+  display: table;
+  width: calc(100% + 2 * var(--space-xs));
+  margin-inline: calc(-1 * var(--space-xs));
+  border-spacing: var(--space-xs) 0;
+}
+
+.segmented__row .segmented__option {
+  display: table-cell;
+  max-width: none;
+  /* A table cell takes its height as the minimum and always fills the whole row */
+  height: var(--segment-height);
+  vertical-align: middle;
+}
+
+/* The checked radio hides the cells of every other restaurant, no JavaScript needed.
+   A new restaurant needs one more selector here and data-restaurant on its cells. */
+.main:has(.segmented__input[value="Eat"]:checked) [data-restaurant]:not([data-restaurant="Eat"]),
+.main:has(.segmented__input[value="Fei"]:checked) [data-restaurant]:not([data-restaurant="Fei"]),
+.main:has(.segmented__input[value="Fiit"]:checked) [data-restaurant]:not([data-restaurant="Fiit"]) {
+  display: none;
+}
+
+/* Buttons */
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  min-height: var(--target);
+  padding: 0 var(--space);
+  border: 1px solid var(--color-text);
+  border-radius: 0;
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  font-size: var(--font-size-xs);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    opacity var(--transition),
+    transform var(--duration-press) var(--ease-out);
+}
+
+@media (hover: hover) {
+  .button:hover {
+    opacity: var(--hover-opacity);
+  }
+}
+
+/* Gives a little under the finger, so the press is felt before the result arrives */
+.button:active {
+  transform: scale(0.97);
+}
+
+.button:disabled {
+  opacity: 0.4;
+  cursor: progress;
+}
+
+.button--solid {
+  background-color: var(--color-text);
+  color: var(--color-bg);
+}
+
+.meta {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+  letter-spacing: 0.04em;
+}
+
+/* Always on its own line under "Posledná aktualizácia" */
+.meta time {
+  display: block;
+  color: var(--color-text);
+  font-size: var(--font-size-sm);
+  letter-spacing: 0;
+  white-space: nowrap;
+}
+
+/* Footer */
+
+.site-footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--space-xs) var(--space-lg);
+  padding: var(--space) var(--edge) var(--space-lg);
+  border-top: 1px solid var(--color-line-light);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+  line-height: 1.5;
+}
+
+/* Main content */
+
+.main {
+  display: flex;
+  flex: 1 0 auto;
+  flex-direction: column;
+  gap: var(--space-lg);
+  min-width: 0;
+  padding: var(--space-lg) var(--edge) calc(var(--space-lg) * 2);
+  /* The menu slides in sideways when the day changes; it must not widen the page meanwhile */
+  overflow-x: clip;
+}
+
+/* Title across the top; restaurant filter below it on the left,
+   update button on the same row on the right, last update time under the button */
+.topbar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    "title title"
+    "filter update";
+  align-items: start;
+  /* Fixed column gap, so the filter keeps its distance from the update button at any width */
+  gap: var(--space) 2.5rem;
+}
+
+.topbar > .title {
+  grid-area: title;
+}
+
+.topbar__filter {
+  grid-area: filter;
+}
+
+/* Wide screens: two rows of buttons as tall as the update button,
+   "all restaurants" across the whole filter, the three restaurants under it */
+@media (min-width: 801px) {
+  .topbar__filter {
     display: grid;
-    gap: 0.5rem;
+    grid-template-columns: minmax(0, 1fr);
+    /* Two thirds of the screen width, at least 26rem, never more than the space beside the update button */
+    width: clamp(26rem, 66vw, 100%);
+  }
+
+  .topbar__filter .segmented__option {
+    max-width: none;
+  }
+
+  /* A little lower than the three restaurant buttons under it */
+  .segmented__option--all {
+    min-height: 2.1rem;
+  }
+}
+
+/* Medium screens: one row of buttons, stretched to the height of the update button + time
+   beside it; the bottom padding keeps them 15px lower than that */
+@media (min-width: 601px) and (max-width: 800px) {
+  .topbar__filter {
+    align-self: stretch;
+    padding-bottom: 15px;
+  }
+}
+
+/* As wide as the button (min-content: the button doesn't wrap, the time below does) */
+.update {
+  grid-area: update;
+  display: grid;
+  justify-items: end;
+  gap: var(--space-xs);
+  width: min-content;
+  text-align: right;
+}
+
+.title {
+  font-size: clamp(1.25rem, 0.8rem + 1.6vw, 2.25rem);
+  letter-spacing: -0.02em;
+}
+
+.lead {
+  max-width: 60ch;
+  font-size: var(--font-size-lg);
+}
+
+/* Day switcher: one segment per day across the whole width */
+
+.days {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: var(--space-sm) var(--space);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.day {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  width: 100%;
+  min-height: 3.5rem;
+  padding: var(--space-sm) var(--space-sm) var(--space-sm) 0;
+  border: 0;
+  border-top: 1px solid var(--color-line);
+  background: none;
+  color: var(--color-text-muted);
+  font-family: var(--font-body);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    opacity var(--transition),
+    color var(--transition);
+}
+
+@media (hover: hover) {
+  .day:hover {
+    opacity: var(--hover-opacity);
+  }
+}
+
+.day[aria-pressed="true"] {
+  color: var(--color-text);
+}
+
+/* Marker of the chosen day: a 3px black bar over the grey line. When the day changes it
+   shrinks towards the new day and grows in the new one from the old one's side
+   (js/motion.js sets --marker-from); without the script it simply is there. */
+.day::before {
+  content: "";
+  position: absolute;
+  top: -1px;
+  right: 0;
+  left: 0;
+  height: 3px;
+  background-color: var(--color-text);
+  transform: scaleX(0);
+  transform-origin: var(--marker-from, left) center;
+  transition: transform var(--duration-exit) var(--ease-exit);
+}
+
+.day[aria-pressed="true"]::before {
+  transform: scaleX(1);
+  transition: transform var(--duration-state) var(--ease-out);
+}
+
+.day__name {
+  font-family: var(--font-display);
+  font-size: 0.875rem;
+  line-height: 1.3;
+  text-transform: uppercase;
+}
+
+.day__date {
+  font-size: var(--font-size-xs);
+  letter-spacing: 0.04em;
+}
+
+.day[aria-current="date"] .day__date::after {
+  content: " · dnes";
+}
+
+/* Loading: while the menu loads it gives its place to a big logo whose mill turns
+   (the turning is in the logo rules above), with a line of text under it */
+
+.loader {
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: var(--space);
+  min-height: 22rem;
+  color: var(--color-text);
+  text-align: center;
+}
+
+.loader__logo {
+  width: clamp(6rem, 12vw, 9rem);
+  height: auto;
+  aspect-ratio: 1;
+}
+
+.loader__text {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+  letter-spacing: 0.04em;
+}
+
+.main:has(.loader:not([hidden])) .board {
+  display: none;
+}
+
+/* Menu board: one table for the whole week. Restaurants are columns, and every day has a title
+   row and two row groups (soups, main dishes), so rows line up across all restaurants and empty
+   cells show who has fewer dishes. data-day on .board shows one day (0-4) without its title row,
+   "week" shows all five days under each other. */
+
+.board {
+  display: grid;
+}
+
+.board[data-day="0"] tbody:not([data-day="0"]),
+.board[data-day="1"] tbody:not([data-day="1"]),
+.board[data-day="2"] tbody:not([data-day="2"]),
+.board[data-day="3"] tbody:not([data-day="3"]),
+.board[data-day="4"] tbody:not([data-day="4"]),
+.board:not([data-day="week"]) .menu-table__day {
+  display: none;
+}
+
+/* The border-spacing of the table also lands on its outer edges,
+   the negative margin pulls the first and last column back to the content edge */
+.menu-table {
+  width: calc(100% + 2 * var(--space));
+  margin-inline: calc(-1 * var(--space));
+  table-layout: fixed;
+  border-collapse: separate;
+  border-spacing: var(--space) 2px;
+}
+
+/* The row of restaurants is there once and sticks to the top of the window while the days
+   scroll under it (the whole week, in the week view). It stops half a label lower, so the
+   "Lokálna kópia" label on its line stays whole; the white shadow above it covers that strip. */
+.menu-table thead {
+  position: sticky;
+  z-index: 2;
+  top: 0.5rem;
+}
+
+/* Element selectors only, so the cell classes below can override them */
+th,
+td {
+  padding: 0;
+  font-weight: inherit;
+  text-align: left;
+  vertical-align: top;
+}
+
+/* Day title row of the week view, across all columns */
+.menu-table__day-title {
+  padding: var(--space-lg) 0 0;
+  font-family: var(--font-display);
+  font-size: var(--font-size-base);
+  letter-spacing: 0.04em;
+  line-height: 1.3;
+  text-transform: uppercase;
+}
+
+.menu-table__day:first-of-type .menu-table__day-title {
+  padding-top: var(--space-sm);
+}
+
+.menu-table__day-title time {
+  margin-left: var(--space-sm);
+  color: var(--color-text-muted);
+  font-family: var(--font-body);
+  font-size: var(--font-size-sm);
+  letter-spacing: 0.04em;
+}
+
+.menu-table__day-title[aria-current="date"] time::after {
+  content: " · dnes";
+}
+
+/* The table's name is for screen readers; on screen the tabs and day titles name the days */
+.menu-table__caption {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Column heads: restaurant name, address, link, update time.
+   White behind them and in a strip above and below, for the dishes that scroll under the stuck
+   row: they vanish a little under its edge instead of touching it. Unstuck, the strip below
+   falls on the white gap before the first group, so it shows nothing. */
+.menu-table__restaurant {
+  position: relative;
+  padding: var(--space-sm) 0;
+  border-top: var(--marker) solid var(--color-text);
+  background-color: var(--color-bg);
+  box-shadow:
+    0 -0.5rem 0 var(--color-bg),
+    0 0.5rem 0 var(--color-bg);
+}
+
+.menu-table__restaurant > * + * {
+  margin-top: var(--space-xs);
+}
+
+/* Group label (Polievky, Hlavné jedlá), repeated at the top of every column */
+.menu-table__label {
+  padding: var(--space-sm) 0 var(--space-xs);
+  font-family: var(--font-display);
+  font-size: var(--font-size-xs);
+  letter-spacing: 0.04em;
+  line-height: 1.4;
+  text-transform: uppercase;
+}
+
+/* Space above every group and a thin line where it starts (the white border is the gap) */
+.menu-table__group > tr:first-child > * {
+  border-top: var(--space) solid var(--color-bg);
+  box-shadow: inset 0 1px 0 var(--color-line);
+}
+
+/* A restaurant with no dishes that day: in place of its soup label a large quiet sentence,
+   "V tento deň jedáleň menu nevydáva", with its logo, faded, under it. Its main dish label goes
+   away (one line per restaurant, like the filter). When the column stands alone the sentence
+   simply takes the label's place; next to other restaurants it starts where the label would be
+   and lies over the column's empty cells, so the label row and the rows of the others keep
+   their height. */
+.menu-empty {
+  position: relative;
+  color: var(--color-text-muted);
+}
+
+.menu-empty__text {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 1.625rem;
+  font-weight: 300;
+  letter-spacing: 0;
+  line-height: 1.25;
+  text-transform: none;
+  text-wrap: balance;
+}
+
+.menu-empty__text::after {
+  content: "";
+  display: block;
+  width: 4.5rem;
+  aspect-ratio: 1;
+  margin-top: var(--space);
+  background-color: var(--color-line);
+  opacity: 0.5;
+  -webkit-mask: url("../logo.svg") center / contain no-repeat;
+  mask: url("../logo.svg") center / contain no-repeat;
+}
+
+@media (min-width: 801px) {
+  :where(.main:has(.segmented__option--all :checked)) .menu-empty__text {
+    position: absolute;
+    top: var(--space-sm);
+    right: 0;
+    left: 0;
+  }
+}
+
+tbody:has(.menu-empty[data-restaurant="Eat"]) + tbody .menu-table__label[data-restaurant="Eat"],
+tbody:has(.menu-empty[data-restaurant="Fei"]) + tbody .menu-table__label[data-restaurant="Fei"],
+tbody:has(.menu-empty[data-restaurant="Fiit"]) + tbody .menu-table__label[data-restaurant="Fiit"] {
+  visibility: hidden;
+}
+
+.restaurant__name {
+  display: block;
+  font-family: var(--font-display);
+  line-height: 1.25;
+  text-transform: uppercase;
+  overflow-wrap: break-word;
+}
+
+.restaurant__name,
+.about__title {
+  font-size: var(--font-size-lg);
+  letter-spacing: -0.01em;
+}
+
+.restaurant__address {
+  display: block;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
+.restaurant__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-xs) var(--space);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+  letter-spacing: 0.04em;
+}
+
+.restaurant__link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  min-height: 1.5rem;
+  color: var(--color-text);
+}
+
+.restaurant__link .icon {
+  width: 0.75rem;
+  height: 0.75rem;
+}
+
+/* Small outlined label, e.g. "Lokálna kópia". It sits on the black line at the top right of the
+   restaurant heading, out of the text flow, so it never adds a line: the heading row keeps
+   the same height with or without it and does not jump when the filter changes the columns. */
+.tag {
+  --tag-height: 1rem;
+  position: absolute;
+  /* Centred on the line, which lies just above the heading's padding box */
+  top: calc(var(--tag-height) / -2 - var(--marker) / 2);
+  right: 0;
+  height: var(--tag-height);
+  padding: 0 var(--space-xs);
+  border: 1px solid var(--color-line);
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-size: 0.625rem;
+  letter-spacing: 0.06em;
+  line-height: calc(var(--tag-height) - 2px);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* Date of the local copy, after the words (script.js fills it in); an empty one takes no room */
+.tag__date {
+  margin-left: 0.25em;
+  color: var(--color-text-muted);
+}
+
+.tag__date:empty {
+  display: none;
+}
+
+/* Filter on wide screens: the label slides along the line together with its heading */
+::view-transition-group(.restaurant-tag) {
+  animation-duration: 360ms;
+  animation-timing-function: var(--ease-in-out);
+}
+
+/* Meals: soups on a gray band, main dishes on hairlines, prices in their own column.
+   .meal is the table cell; an empty cell (no class) means the restaurant has nothing more. */
+
+.meal {
+  padding: var(--space-sm) 0;
+  border-bottom: 1px solid var(--color-line-light);
+}
+
+.meal__body {
+  display: grid;
+  /* name and details 75 %, price 25 % */
+  grid-template-columns: minmax(0, 3fr) minmax(0, 1fr);
+  grid-template-areas:
+    "name price"
+    "details price";
+  column-gap: var(--space-sm);
+  row-gap: 2px;
+}
+
+.meal__name {
+  grid-area: name;
+  font-weight: 500;
+  line-height: 1.35;
+}
+
+.meal__details {
+  grid-area: details;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--space-sm);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
+.meal__price {
+  grid-area: price;
+  align-self: start;
+  font-family: var(--font-display);
+  font-size: 0.875rem;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  overflow-wrap:normal;
+}
+
+.meal__price-alt {
+  display: block;
+  margin-top: 2px;
+  color: var(--color-text-muted);
+  font-family: var(--font-body);
+  font-size: var(--font-size-xs);
+  letter-spacing: 0.02em;
+}
+
+.meal--soup {
+  padding: var(--space-sm);
+  border-bottom: 0;
+  background-color: var(--color-surface);
+}
+
+.meal--soup .meal__name {
+  font-weight: 400;
+}
+
+/* One restaurant chosen on a wide screen: its dishes fill three columns instead of one.
+   The table becomes a grid, its rows dissolve (display: contents) so the cells flow
+   three per row, headings span the full width and empty cells drop out. */
+@media (min-width: 801px) {
+  .main:has(.segmented__input:checked:not([value="all"])) .menu-table {
+    display: block;
+    padding-inline: var(--space);
+  }
+
+  /* :where keeps this weak, so the days that are not shown stay hidden */
+  :where(.main:has(.segmented__input:checked:not([value="all"]))) .menu-table thead,
+  :where(.main:has(.segmented__input:checked:not([value="all"]))) .menu-table tbody {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 2px var(--space);
+  }
+
+  .main:has(.segmented__input:checked:not([value="all"])) .menu-table tr {
+    display: contents;
+  }
+
+  .main:has(.segmented__input:checked:not([value="all"])) .menu-table__restaurant,
+  .main:has(.segmented__input:checked:not([value="all"])) .menu-table__label,
+  .main:has(.segmented__input:checked:not([value="all"])) .menu-table__day-title {
+    grid-column: 1 / -1;
+  }
+
+  .main:has(.segmented__input:checked:not([value="all"])) .menu-table td:not(.meal) {
+    display: none;
+  }
+}
+
+/* Narrow screens show one restaurant at a time: the table becomes a single column the same way
+   (in table layout the day titles, spanning all three columns, would keep three narrow ones) */
+@media (max-width: 800px) {
+  .menu-table {
+    display: block;
+    padding-inline: var(--space);
+  }
+
+  .menu-table thead,
+  .menu-table tbody {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2px;
+  }
+
+  .menu-table tr {
+    display: contents;
+  }
+
+  .menu-table td:not(.meal) {
+    display: none;
+  }
+}
+
+/* Week view: the five days under each other, the restaurant heads keep only name and link,
+   so the row that sticks over the whole week stays low */
+
+.board[data-day="week"] .restaurant__address {
+  display: none;
+}
+
+/* Messages: missing menu, failed restaurant, weekend */
+
+.notice {
+  display: grid;
+  gap: var(--space-xs);
+  padding: var(--space);
+  border: 1px dashed var(--color-line);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
+.notice__title {
+  color: var(--color-text);
+  font-family: var(--font-display);
+  font-size: var(--font-size-xs);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.notice--error {
+  border-style: solid;
+  border-color: var(--color-text);
+  color: var(--color-text);
+}
+
+/* Across the whole board, e.g. on weekends */
+.notice--board {
+  grid-column: 1 / -1;
+  justify-items: center;
+  padding: calc(var(--space-lg) * 2) var(--space-lg);
+  text-align: center;
+}
+
+/* O projekte */
+
+.about {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
+  gap: var(--space-lg);
+  align-items: start;
+}
+
+.about__section {
+  display: grid;
+  gap: var(--space);
+  min-width: 0;
+  padding-top: var(--space-sm);
+  border-top: var(--marker) solid var(--color-text);
+}
+
+.about__section p {
+  font-size: var(--font-size-sm);
+}
+
+.list {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--font-size-sm);
+}
+
+.list__item {
+  display: grid;
+  gap: 2px;
+  padding: var(--space-sm) 0;
+  border-bottom: 1px solid var(--color-line-light);
+}
+
+.list__item strong {
+  font-weight: 500;
+}
+
+.list__note {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+  letter-spacing: 0.02em;
+}
+
+.steps {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: step;
+  font-size: var(--font-size-sm);
+}
+
+.steps__item {
+  display: grid;
+  grid-template-columns: 2rem minmax(0, 1fr);
+  padding: var(--space-sm) 0;
+  border-bottom: 1px solid var(--color-line-light);
+  counter-increment: step;
+}
+
+.steps__item::before {
+  content: counter(step, decimal-leading-zero);
+  font-family: var(--font-display);
+  font-size: var(--font-size-xs);
+  line-height: 1.9;
+}
+
+/* Custom scrollbar (js/scrollbar.js): lies over the page instead of taking width,
+   so nothing moves left. It shows for a moment whenever the page scrolls (touch screens too)
+   and stays while the mouse is near the right edge, where it can be dragged.
+   Without the script the normal browser scrollbar stays. */
+
+.has-custom-scrollbar {
+  scrollbar-width: none;
+}
+
+/* Invisible until the script gives it a state */
+.scrollbar {
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  position: fixed;
+  z-index: 10;
+  top: var(--space-sm);
+  right: 0;
+  bottom: var(--space-sm);
+  width: 1.5rem;
+  /* While hidden it must not catch clicks meant for the page */
+  pointer-events: none;
+  touch-action: none;
+  user-select: none;
+}
+
+.scrollbar.is-disabled {
+  display: none;
+}
+
+.scrollbar.is-near {
+  pointer-events: auto;
+}
+
+/* Rail: a hairline that draws itself downwards from the top */
+.scrollbar::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: calc(0.75rem - 0.5px);
+  bottom: 0;
+  width: 1px;
+  background-color: var(--color-line);
+  transform: scaleY(0);
+  transform-origin: top;
+  transition: transform 450ms var(--ease-out);
+}
+
+.scrollbar.is-near::before,
+.scrollbar.is-flashing::before {
+  transform: scaleY(1);
+}
+
+/* Thumb: the script sets its height and position, the visible bar is its ::before */
+.scrollbar__thumb {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 100%;
+  height: 3rem;
+  cursor: grab;
+}
+
+.scrollbar.is-dragging .scrollbar__thumb {
+  cursor: grabbing;
+}
+
+/* Springs in from beyond the edge just after the rail starts, widens under the pointer */
+.scrollbar__thumb::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0.5rem;
+  bottom: 0;
+  width: 0.5rem;
+  border-radius: 0.25rem;
+  background-color: var(--color-text);
+  opacity: 0;
+  transform: translateX(1.25rem) scaleX(0.5);
+  transition: opacity 200ms ease-out, transform 450ms var(--ease-spring);
+}
+
+.scrollbar.is-near .scrollbar__thumb::before,
+.scrollbar.is-flashing .scrollbar__thumb::before {
+  opacity: 1;
+  transform: scaleX(0.5);
+  transition-delay: 60ms;
+}
+
+.scrollbar.is-near .scrollbar__thumb:hover::before,
+.scrollbar.is-dragging .scrollbar__thumb::before {
+  transform: scaleX(1);
+  transition-delay: 0s;
+}
+
+/* Page to page (Menu ↔ O projekte): the black marker of the current page slides along the
+   navigation to the new link, the header stays where it is, the content fades and settles.
+   Swup (js/navigation.js) runs it as a view transition inside the page, so the stylesheet and
+   scripts stay loaded; without JavaScript the browser runs the same one between the two pages. */
+
+@view-transition {
+  navigation: auto;
+}
+
+/* Swup in a browser without view transitions: the content only fades out and in */
+html:not(.swup-native).is-changing .transition-main {
+  transition: opacity var(--duration-state) var(--ease-out);
+}
+
+html:not(.swup-native).is-animating .transition-main {
+  opacity: 0;
+}
+
+.site-header {
+  view-transition-name: site-header;
+}
+
+.nav__link[aria-current="page"]::before {
+  view-transition-name: nav-marker;
+}
+
+::view-transition-group(nav-marker) {
+  animation-duration: 360ms;
+  animation-timing-function: var(--ease-in-out);
+}
+
+/* The marker is a plain bar: no cross-fade (it would turn grey halfway),
+   the new one stretches with the moving group and keeps its 3px */
+::view-transition-old(nav-marker) {
+  opacity: 0;
+  animation: none;
+}
+
+::view-transition-new(nav-marker) {
+  height: 100%;
+  animation: none;
+}
+
+::view-transition-old(root) {
+  animation: page-leave var(--duration-exit) var(--ease-exit) both;
+}
+
+::view-transition-new(root) {
+  animation: page-arrive var(--duration-state) var(--ease-out) 60ms both;
+}
+
+@keyframes page-leave {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes page-arrive {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+/* Restaurant filter on wide screens (js/motion.js names the headings and the menu for it):
+   a restaurant heading that stays slides to its new place and its column line stretches or
+   shrinks with it, headings that come or go fade, the dishes settle in like after a refresh.
+   The rest of the page does not move. */
+:root.is-filtering::view-transition-old(root),
+:root.is-filtering::view-transition-new(root) {
+  animation: none;
+}
+
+::view-transition-group(.restaurant) {
+  animation-duration: 360ms;
+  animation-timing-function: var(--ease-in-out);
+}
+
+/* Both pictures of a heading keep their real size from the top left (text never stretches);
+   the moving box shows as much of them as its width at that moment */
+::view-transition-image-pair(.restaurant) {
+  overflow: clip;
+}
+
+::view-transition-old(.restaurant),
+::view-transition-new(.restaurant) {
+  width: auto;
+  height: auto;
+}
+
+/* A heading that leaves is gone quickly, before the one that stays slides over its place */
+::view-transition-old(.restaurant):only-child {
+  animation-duration: var(--duration-exit);
+}
+
+/* A heading that stays shows only its wider picture inside the moving box, so its line grows or
+   shrinks with the box in solid black and the text does not cross-fade (js/motion.js tells which) */
+::view-transition-old(.restaurant.grows),
+::view-transition-new(.restaurant.shrinks) {
+  opacity: 0;
+  animation: none;
+}
+
+::view-transition-new(.restaurant.grows),
+::view-transition-old(.restaurant.shrinks) {
+  animation: none;
+}
+
+::view-transition-group(menu-board) {
+  animation: none;
+}
+
+::view-transition-old(menu-board) {
+  opacity: 0;
+  animation: none;
+}
+
+::view-transition-new(menu-board) {
+  animation: page-arrive 280ms var(--ease-out) both;
+}
+
+/* Laptops: narrower page edges */
+@media (max-width: 64rem) {
+  :root {
+    --edge: 24px;
+  }
+}
+
+/* Narrow screens: one restaurant at a time. The "all" option is hidden;
+   while it is still checked, the first restaurant stands in for it (column and button) */
+@media (max-width: 800px) {
+  .segmented__option--all {
+    display: none;
+  }
+
+  .main:has(.segmented__option--all :checked) .menu-table tr > :nth-child(n + 2) {
+    display: none;
+  }
+
+  .main:has(.segmented__option--all :checked) .segmented__row .segmented__option:first-child {
+    border-color: var(--color-text);
+    background-color: var(--color-text);
+    color: var(--color-bg);
+  }
+
+  /* Smaller buttons: update button, restaurant filter and day tabs */
+  .button,
+  .segmented__option {
+    padding: 0 0.75rem;
+    font-size: 0.625rem;
+  }
+
+  .button {
+    gap: var(--space-xs);
+    min-height: 2.25rem;
+  }
+
+  .segmented {
+    --segment-height: 2.25rem;
+  }
+
+  .button .icon {
+    width: 0.875rem;
+    height: 0.875rem;
+  }
+
+  .day {
+    min-height: 2.75rem;
+    padding-block: var(--space-xs);
+  }
+
+  .day__name {
+    font-size: 0.75rem;
+  }
+}
+
+/* Phones and small tablets */
+@media (max-width: 48rem) {
+  :root {
+    --space: 0.75rem;
+    --edge: 15px;
+  }
+
+  .site-header {
+    padding-top: 15px;
+  }
+
+  .main {
+    padding: var(--space-lg) var(--edge);
+  }
+
+  .days {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .site-footer {
+    flex-direction: column;
+  }
+}
+
+/* Small phones: the update button with the last update time moves to the top right corner,
+   next to the navigation */
+@media (max-width: 600px) {
+  .app {
+    position: relative;
+  }
+
+  /* Room for the update block: on the right the navigation wraps before it reaches it,
+     and the header is as tall as button + time, so the title starts below them */
+  .site-header {
+    min-height: calc(15px + 5rem);
+    padding-right: calc(var(--edge) + 10.5rem);
+  }
+
+  .nav__list {
+    gap: 0 var(--space);
+  }
+
+  /* The corner belongs to the update block now, the logo moves to the right side of the footer,
+     centred on the footer text */
+  .site-header__logo {
+    display: none;
+  }
+
+  .site-footer {
+    position: relative;
+    padding-right: calc(var(--edge) + 2rem + var(--space));
+  }
+
+  .site-footer__logo {
+    display: block;
+    position: absolute;
+    top: var(--space);
+    right: var(--edge);
+    bottom: var(--space-lg);
+    width: 2rem;
+    height: 2rem;
+    margin-block: auto;
+  }
+
+  .topbar {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "title"
+      "filter";
+  }
+  /* Header padding + half the height difference between a nav link (2.75rem) and the button (2.25rem) */
+  .update {
+    grid-area: auto;
+    position: absolute;
+    top: calc(15px + 0.25rem);
+    right: var(--edge);
+  }
+}
+
+/* Very narrow phones: icon-only update button, smaller filter, title and dish names */
+@media (max-width: 325px) {
+  /* Only the button shrinks, so the time below may be wider than it */
+  .update {
+    width: auto;
+  }
+
+  .update .button {
+    width: 2.25rem;
     padding: 0;
-    list-style: none;
   }
-  
-  .products li {
-    display: flex;
-    align-items: center;
-    gap: var(--space);
-    padding: 0.5rem var(--space);
-    background: var(--color-muted);
-    border-left: 4px solid var(--color-brand);
-    border-radius: var(--radius);
-  }
-  
-  .products li span:first-child {
-    flex: 1;
-  }
-  
-  button {
-    padding: 0.4rem 0.8rem;
+
+  /* The text stays for screen readers */
+  .button__text {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
     border: 0;
-    border-radius: var(--radius);
-    background: var(--color-brand);
-    color: #ffffff;
-    font: inherit;
-    cursor: pointer;
   }
-  
-  button:disabled {
-    opacity: 0.5;
-    cursor: progress;
+
+  /* The navigation only has to make room for the button now */
+  .site-header {
+    padding-right: calc(var(--edge) + 3rem);
   }
-  
-  .cart {
-    margin-top: 2rem;
-    padding: var(--space);
-    border: 2px solid var(--color-accent);
-    border-radius: var(--radius);
+
+  .segmented {
+    --segment-height: 2rem;
   }
+
+  .segmented__option {
+    padding: 0 0.5rem;
+    font-size: 0.5625rem;
+  }
+
+  .title {
+    font-size: 1rem;
+  }
+
+  .meal__name {
+    font-size: 0.875rem;
+  }
+
+  .days {
+    gap: var(--space-xs) var(--space-sm);
+  }
+
+  .day {
+    min-height: 2.25rem;
+    padding-block: 2px;
+  }
+
+  .day__name {
+    font-size: 0.625rem;
+  }
+
+  .day__date {
+    font-size: 0.5625rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  /* The logo stays still, the loading text says enough */
+  .logo .mill {
+    animation: none !important;
+  }
+
+  /* The other page simply loads */
+  @view-transition {
+    navigation: none;
+  }
+}

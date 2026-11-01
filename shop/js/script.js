@@ -4,15 +4,28 @@ const webs = [
     { id: "Fiit", name: "FiitFood", url: "http://localhost:8030/proxy/menu/#fiit-food", offline: "../shop/offline/FiitFood.html", parser: parseFiit },
 ];
 
+const localLastRefresh = new Date("November 1, 2026, 13:00")
+
 async function refresh(){
     const results = await Promise.allSettled(webs.map(fetchWeb));
 
     results.forEach((res, i) => {
-        if(res.status != "fulfilled") console.error("restaurnat: " + webs[i].name + " failed to load; " + res.reason.message);
+        if(res.status != "fulfilled") {
+            console.error("restaurnat: " + webs[i].name + " failed to load; " + res.reason.message);
+        }
     });
-    localStorage.LastRefresh = new Date();
-    //localStorage.setItem("LastRefresh", JSON.stringify(new Date()));
+    localStorage.setItem("LastRefresh", new Date().toISOString());
+    showLastRefresh();
     return results;
+}
+
+function showLastRefresh(){
+    const date = new Date(localStorage.getItem("LastRefresh"));
+    if (!localStorage.getItem("LastRefresh") || isNaN(date)) return;
+    const time = document.querySelector("#LastRefresh");
+    if (!time) return; // O projekte has no update time
+    time.dateTime = date.toISOString();
+    time.textContent = date.toLocaleString("sk-SK");
 }
 
 async function fetchWeb(web) {  
@@ -217,7 +230,14 @@ function Meal(name, alergens, type, price, thumbnail){
     this.thumbnail = thumbnail;
 }
 
-webs.forEach(web => {
+showLastRefresh();
+showMenus();
+window.addEventListener("storage", e => {
+    if (e.key == "LastRefresh") showLastRefresh();
+    if (e.key == "MenuFiit" || e.key == "MenuFei"|| e.key == "MenuEat") showMenus();
+});
+
+/*webs.forEach(web => {
     const now = new Date();
     if (localStorage.getItem("Menu" + web.id) == undefined || new Date(localStorage.LastRefresh).getDay() < now.getDay()){
         refresh().then(results =>{
@@ -227,5 +247,5 @@ webs.forEach(web => {
             });
         });
     }
-});
+});*/
 
