@@ -4,6 +4,7 @@
 // the document.
 
 let clearedNote = null;
+let clearedNoteFade = null;
 
 function clearSavedData(){
     webs.forEach(web => localStorage.removeItem("Menu" + web.id));
@@ -18,9 +19,22 @@ function clearSavedData(){
 
     const status = document.querySelector(".site-footer__status");
     if (!status) return;
-    status.textContent = "Uložené dáta sú vymazané.";
+    // The note rises in and fades out before it goes, instead of popping in and vanishing
+    // (curves from js/motion.js; with reduced motion it only fades)
     clearTimeout(clearedNote);
-    clearedNote = setTimeout(() => status.textContent = "", 6000);
+    clearedNoteFade?.cancel();
+    status.textContent = "Uložené dáta sú vymazané.";
+    status.animate(
+        prefersReducedMotion.matches ? { opacity: [0, 1] } : { opacity: [0, 1], transform: ["translateY(0.25rem)", "none"] },
+        { duration: prefersReducedMotion.matches ? 150 : 240, easing: motionEaseOut }
+    );
+    clearedNote = setTimeout(() => {
+        clearedNoteFade = status.animate({ opacity: [1, 0] }, { duration: 120, easing: motionEaseExit, fill: "forwards" });
+        clearedNoteFade.finished.then(() => {
+            status.textContent = "";
+            clearedNoteFade.cancel();
+        }).catch(() => {});
+    }, 6000);
     showMenus();
 }
 

@@ -11,7 +11,9 @@ const localLastRefresh = [new Date("November 1, 2026, 13:00"),//eat
 ]; 
 
 async function refresh(){
-    document.querySelector(".loader").removeAttribute("hidden");
+    let loader = document.querySelector(".loader")
+    if(!loader) return;
+    loader.removeAttribute("hidden");
     const results = await Promise.allSettled(webs.map(fetchWeb));
 
     results.forEach((res, i) => {
@@ -41,6 +43,7 @@ function showLastRefresh(){
         monday.setDate(monday.getDate()+offset);
     }
     let daysHtml = document.querySelectorAll(".day__date");
+    for(const dayHtml of daysHtml){dayHtml.parentElement.removeAttribute("aria-pressed");}
     let daysTable = document.querySelectorAll(".menu-table__day-title time");
     let found = false;
     for(let i = 0; i<5; i++){
@@ -50,7 +53,7 @@ function showLastRefresh(){
         daysTable[i].textContent = `${monday.getDate()}. ${monday.getMonth()+1}.`;
 
         if(new Date().getDate() == monday.getDate()){
-            daysHtml[i].setAttribute("presed", "true");
+            daysHtml[i].setAttribute("aria-pressed", "true");
             daysHtml[i].setAttribute("aria-current", "date");
             found = true;
         }
@@ -356,6 +359,7 @@ function showMenus(){
         });
     showLastRefresh();
     document.querySelector(".loader").setAttribute("hidden", "true");
+    if (typeof showMenu === "function") showMenu();
     });
 }
 
@@ -365,15 +369,14 @@ window.addEventListener("storage", e => {
     if (e.key == "MenuFiit" || e.key == "MenuFei"|| e.key == "MenuEat") showMenus();
 });
 
-webs.forEach(web => {
-    const now = new Date();
-    if (localStorage.getItem("Menu" + web.id) == undefined || new Date(localStorage.LastRefresh).getDay() < now.getDay()){
-        refresh().then(results =>{
-            results.forEach(result => {
-                if (result.status !== "fulfilled")
-                    console.error(result);
-            });
+// One refresh downloads all three menus, so it runs once when any of them is missing or old
+const now = new Date();
+if (webs.some(web => localStorage.getItem("Menu" + web.id) == undefined) || new Date(localStorage.LastRefresh).getDay() < now.getDay()){
+    refresh().then(results =>{
+        results.forEach(result => {
+            if (result.status !== "fulfilled")
+                console.error(result);
         });
-    }
-});
+    });
+}
 

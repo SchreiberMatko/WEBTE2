@@ -27,6 +27,7 @@ const loaderMinimum = 700;
 function showMenu(){
     const board = document.querySelector(".board");
     if (!board) return;
+    syncBackgroundNow();
     board.getAnimations().forEach(animation => animation.cancel());
 
     if (prefersReducedMotion.matches){
@@ -47,6 +48,7 @@ function dayParts(){
 
 // The dishes of the new day slide in from its side (direction 1 = later day, -1 = earlier)
 function showDayParts(direction){
+    syncBackgroundNow();
     const parts = dayParts();
     parts.forEach(part => part.getAnimations().forEach(animation => animation.cancel()));
 
@@ -217,6 +219,30 @@ function stopLoading(done){
 document.addEventListener("click", e => {
     if (e.target.closest(".update .button")) startLoading();
 });
+
+// Background drift (styles.css): every surface that shows the background runs its own copy, and
+// one added later (a new menu table, the opened dialog) would start from the beginning. Every copy
+// is set to start with the page, so they all show the same moment and the surfaces stay swapped.
+function syncBackground(animations){
+    animations
+        .filter(animation => animation.animationName?.startsWith("glow-"))
+        .forEach(animation => animation.startTime = 0);
+}
+
+document.addEventListener("animationstart", e => {
+    if (e.animationName.startsWith("glow-")) syncBackground(e.target.getAnimations({ subtree: true }));
+});
+
+// "animationstart" only comes a frame or two after a surface appears, so the dishes of another
+// day (hidden days do not drift) would first show the drift from its beginning and then jump.
+// Where the menu is shown (showMenu, showDayParts) the copies are set before that first frame:
+// getAnimations() brings the style up to date, so the new copies exist already.
+function syncBackgroundNow(){
+    syncBackground(document.getAnimations());
+}
+
+// The copies that started before this script ran
+syncBackgroundNow();
 
 // One copy of the page (the first load and every page Swup swaps in): the filter it shows and
 // the time to watch. The new time rises into place, the menu settles in when the logo has gone.

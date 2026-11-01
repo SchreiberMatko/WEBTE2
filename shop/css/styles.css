@@ -23,7 +23,11 @@
   --color-text: #111111;
   --color-text-muted: #595959;
   --color-bg: #ffffff;
-  --color-surface: #f2f2f2;
+  /* Second tone of the page background: the gradient flows between the two (Background below) */
+  --color-bg-alt: #f2e1cb;
+  /* Soup cards: one step off the two background tones (darker here, lighter in dark mode) */
+  --color-surface: #f4f4f4;
+  --color-surface-alt: #e7d6c0;
   --color-line: #888888;
   --color-line-light: #e5e5e5;
 
@@ -63,7 +67,9 @@
     --color-text: #f2ebe4;
     --color-text-muted: #ab9d90;
     --color-bg: #140900;
-    --color-surface: #22170e;
+    --color-bg-alt: #111111;
+    --color-surface: #1f140b;
+    --color-surface-alt: #1c1c1c;
     --color-line: #75665a;
     --color-line-light: #34281e;
   }
@@ -88,6 +94,79 @@ body {
   font-family: var(--font-body);
   font-size: var(--font-size-base);
   line-height: 1.5;
+}
+
+/* Background: the page colour flows into its second tone (--color-bg-alt) around a glow that
+   drifts slowly across the window. Flat surfaces over the page (restaurant heads, labels, the
+   dialog and its buttons) take the same gradient with the two tones swapped and fixed to the
+   window, so over the page colour they show the second tone and the other way round. Both tones
+   of a theme are close, so text reads on either. Open Props (in the page head) gives the easing
+   and the grain that hides the steps of such a soft gradient; without it the drift falls back to
+   plain ease-in-out and the grain is left out. The motion stops with reduced motion (end of file).
+   The glow position is not inherited: only the elements below drift, each its own copy, instead
+   of every element of the page being restyled on every frame. js/motion.js keeps the copies at
+   the same moment (a surface added later, like a new menu table or the opened dialog, would start
+   from the beginning); without it they still drift, just not in step. */
+
+@property --glow-x {
+  syntax: "<percentage>";
+  inherits: false;
+  initial-value: 20%;
+}
+
+@property --glow-y {
+  syntax: "<percentage>";
+  inherits: false;
+  initial-value: 15%;
+}
+
+body::before,
+.button:not(.button--solid),
+.dialog,
+.tag,
+.menu-table__restaurant::before,
+.menu-table__restaurant::after,
+.meal--soup::before {
+  --glow: circle 75vmax at var(--glow-x) var(--glow-y);
+  --page-gradient: radial-gradient(var(--glow), var(--color-bg-alt), var(--color-bg));
+  --surface-gradient: radial-gradient(var(--glow), var(--color-bg), var(--color-bg-alt));
+  /* Soup cards: the page gradient itself, one step off */
+  --soup-gradient: radial-gradient(var(--glow), var(--color-surface-alt), var(--color-surface));
+  /* Two lengths that do not divide each other, so the path does not repeat in a short loop */
+  animation:
+    glow-x 47s var(--ease-sine-in-out, ease-in-out) infinite alternate,
+    glow-y 31s var(--ease-sine-in-out, ease-in-out) infinite alternate;
+}
+
+@keyframes glow-x {
+  to {
+    --glow-x: 80%;
+  }
+}
+
+@keyframes glow-y {
+  to {
+    --glow-y: 85%;
+  }
+}
+
+body::before,
+body::after {
+  content: "";
+  position: fixed;
+  z-index: -1;
+  inset: 0;
+  pointer-events: none;
+}
+
+body::before {
+  background: var(--page-gradient);
+}
+
+body::after {
+  background-image: var(--noise-5);
+  filter: var(--noise-filter-1);
+  opacity: 0.05;
 }
 
 h1,
@@ -340,7 +419,7 @@ body:has(.loader:not([hidden])) .logo .mill,
   padding: 0 var(--space);
   border: 1px solid var(--color-text);
   border-radius: 0;
-  background-color: var(--color-bg);
+  background: var(--surface-gradient) fixed;
   color: var(--color-text);
   font-family: var(--font-body);
   font-size: var(--font-size-xs);
@@ -370,7 +449,7 @@ body:has(.loader:not([hidden])) .logo .mill,
 }
 
 .button--solid {
-  background-color: var(--color-text);
+  background: var(--color-text);
   color: var(--color-bg);
 }
 
@@ -435,25 +514,27 @@ body:has(.loader:not([hidden])) .logo .mill,
   }
 }
 
+/* Inline-block, so the note can rise in (js/clear-data.js) */
+.site-footer__status {
+  display: inline-block;
+}
+
 .site-footer__status:not(:empty) {
   margin-left: var(--space-sm);
   color: var(--color-text);
 }
 
 /* Confirmation dialog (native <dialog>): the black marker line on top, centred over a veil of
-   the page colour, rises in a little when it opens */
+   the page colour, rises in a little when it opens and sinks back the same way, quicker, when
+   it closes */
 .dialog {
   width: min(30rem, calc(100% - 2 * var(--edge)));
   padding: var(--space-lg);
   border: 0;
   border-top: var(--marker) solid var(--color-text);
-  background-color: var(--color-bg);
+  background: var(--surface-gradient) fixed;
   color: var(--color-text);
   box-shadow: 0 1.25rem 3rem rgb(0 0 0 / 0.2);
-}
-
-.dialog::backdrop {
-  background-color: color-mix(in srgb, var(--color-bg) 75%, transparent);
 }
 
 .dialog[open] {
@@ -463,7 +544,35 @@ body:has(.loader:not([hidden])) .logo .mill,
 }
 
 .dialog[open]::backdrop {
+  background-color: color-mix(in srgb, var(--color-bg) 75%, transparent);
   transition: background-color var(--duration-state) var(--ease-out);
+}
+
+/* Closing: the dialog has to stay on top of the page while it sinks away (overlay). A browser
+   that cannot keep it there would show it in the footer for a moment, so it just hides it */
+@supports (overlay: auto) {
+  .dialog {
+    opacity: 0;
+    transform: translateY(0.5rem);
+    transition:
+      opacity var(--duration-exit) var(--ease-exit),
+      transform var(--duration-exit) var(--ease-exit),
+      overlay var(--duration-exit) allow-discrete,
+      display var(--duration-exit) allow-discrete;
+  }
+
+  .dialog[open] {
+    opacity: 1;
+    transform: none;
+  }
+
+  .dialog::backdrop {
+    background-color: transparent;
+    transition:
+      background-color var(--duration-exit) var(--ease-exit),
+      overlay var(--duration-exit) allow-discrete,
+      display var(--duration-exit) allow-discrete;
+  }
 }
 
 @starting-style {
@@ -772,18 +881,44 @@ td {
   border: 0;
 }
 
-/* Column heads: restaurant name, address, link, update time.
-   White behind them and in a strip above and below, for the dishes that scroll under the stuck
-   row: they vanish a little under its edge instead of touching it. Unstuck, the strip below
-   falls on the white gap before the first group, so it shows nothing. */
+/* Column heads: restaurant name, address, link, update time. A surface (the swapped gradient)
+   behind them (::after) with no hard edge: it reaches a little past the head and fades out into
+   the page on every side, so the head blends into it and the dishes passing under the stuck row
+   fade out instead of touching its edge. The mask crosses two fades, so the corners soften too.
+   Under it, a strip of the page gradient (::before) covers the dishes that scroll up past the
+   stuck row; unstuck it matches the page, so only the soft edge shows over it. The layers drift
+   with the background, not the head, so the head itself is not restyled on every frame. */
 .menu-table__restaurant {
   position: relative;
   padding: var(--space-sm) 0;
   border-top: var(--marker) solid var(--color-text);
-  background-color: var(--color-bg);
-  box-shadow:
-    0 -0.5rem 0 var(--color-bg),
-    0 0.5rem 0 var(--color-bg);
+}
+
+.menu-table__restaurant::before,
+.menu-table__restaurant::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+}
+
+.menu-table__restaurant::before {
+  inset: calc(-0.5rem - var(--marker)) 0 auto;
+  height: calc(0.5rem + var(--marker));
+  background: var(--page-gradient) fixed;
+}
+
+.menu-table__restaurant::after {
+  --fade: 1rem;
+  /* One side of the mask: eased, so the edge thins out softly instead of in a straight ramp */
+  --fade-side: transparent, rgb(0 0 0 / 0.15) calc(var(--fade) * 0.35), rgb(0 0 0 / 0.6) calc(var(--fade) * 0.7),
+    black var(--fade), black calc(100% - var(--fade)), rgb(0 0 0 / 0.6) calc(100% - var(--fade) * 0.7),
+    rgb(0 0 0 / 0.15) calc(100% - var(--fade) * 0.35), transparent;
+  inset: calc(-1 * (var(--fade) + var(--marker))) calc(-1 * var(--fade)) calc(-1 * var(--fade));
+  background: var(--surface-gradient) fixed;
+  -webkit-mask: linear-gradient(to right, var(--fade-side)), linear-gradient(var(--fade-side));
+  -webkit-mask-composite: source-in;
+  mask: linear-gradient(to right, var(--fade-side)), linear-gradient(var(--fade-side));
+  mask-composite: intersect;
 }
 
 .menu-table__restaurant > * + * {
@@ -800,9 +935,9 @@ td {
   text-transform: uppercase;
 }
 
-/* Space above every group and a thin line where it starts (the white border is the gap) */
+/* Space above every group and a thin line where it starts (the transparent border is the gap) */
 .menu-table__group > tr:first-child > * {
-  border-top: var(--space) solid var(--color-bg);
+  border-top: var(--space) solid transparent;
   box-shadow: inset 0 1px 0 var(--color-line);
 }
 
@@ -924,7 +1059,7 @@ tbody:has(.menu-empty[data-restaurant="Fiit"]) + tbody .menu-table__label[data-r
   height: var(--tag-height);
   padding: 0 var(--space-xs);
   border: 1px solid var(--color-line);
-  background-color: var(--color-bg);
+  background: var(--surface-gradient) fixed;
   color: var(--color-text);
   font-size: 0.625rem;
   letter-spacing: 0.06em;
@@ -1002,10 +1137,21 @@ tbody:has(.menu-empty[data-restaurant="Fiit"]) + tbody .menu-table__label[data-r
   letter-spacing: 0.02em;
 }
 
+/* The soup band drifts with the background (its own layer, like the column heads, so the cell
+   itself is not restyled on every frame); z-index keeps the layer inside the cell */
 .meal--soup {
+  position: relative;
+  z-index: 0;
   padding: var(--space-sm);
   border-bottom: 0;
-  background-color: var(--color-surface);
+}
+
+.meal--soup::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  background: var(--soup-gradient) fixed;
 }
 
 .meal--soup .meal__name {
@@ -1608,5 +1754,27 @@ html:not(.swup-native).is-animating .transition-main {
   /* The other page simply loads */
   @view-transition {
     navigation: none;
+  }
+}
+
+/* iOS Safari draws a fixed background as if it scrolled with its element, so the surfaces could
+   not line up with the page there: each keeps one flat tone (the strips the page colour) */
+@supports (-webkit-touch-callout: none) {
+  .button:not(.button--solid),
+  .dialog,
+  .tag {
+    background: var(--color-bg-alt);
+  }
+
+  .menu-table__restaurant::before {
+    background: var(--color-bg);
+  }
+
+  .menu-table__restaurant::after {
+    background: var(--color-bg-alt);
+  }
+
+  .meal--soup::before {
+    background: var(--color-surface);
   }
 }
