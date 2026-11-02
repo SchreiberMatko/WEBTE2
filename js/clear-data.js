@@ -35,7 +35,6 @@ function clearSavedData(){
             clearedNoteFade.cancel();
         }).catch(() => {});
     }, 6000);
-    showMenus();
 }
 
 document.addEventListener("click", e => {

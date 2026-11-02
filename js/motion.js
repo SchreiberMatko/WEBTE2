@@ -114,12 +114,21 @@ function filterWithTransition(input){
     const board = document.querySelector(".board");
     const headings = [...board.querySelectorAll(".menu-table__restaurant")];
 
+    // A heading moves as its text and, under it, its surface with the soft edge and the line
+    // (styles.css): the surface's soft edge lies in its own box, so every browser keeps it
+    const texts = headings.map(heading => heading.querySelector(".restaurant__head"));
+    const surfaces = headings.map(heading => [heading.querySelector(".restaurant__surface"), heading.dataset.restaurant]).filter(([surface]) => surface);
+
     // A heading's "Lokálna kópia" label moves on its own, so it slides along the line with it
     const tags = headings.map(heading => [heading.querySelector(".tag"), heading.dataset.restaurant]).filter(([tag]) => tag);
 
-    headings.forEach(heading => {
-        heading.style.setProperty("view-transition-name", "restaurant-" + heading.dataset.restaurant);
-        heading.style.setProperty("view-transition-class", "restaurant");
+    texts.forEach((text, i) => {
+        text.style.setProperty("view-transition-name", "restaurant-" + headings[i].dataset.restaurant);
+        text.style.setProperty("view-transition-class", "restaurant");
+    });
+    surfaces.forEach(([surface, restaurant]) => {
+        surface.style.setProperty("view-transition-name", "surface-" + restaurant);
+        surface.style.setProperty("view-transition-class", "restaurant-surface");
     });
     tags.forEach(([tag, restaurant]) => {
         tag.style.setProperty("view-transition-name", "tag-" + restaurant);
@@ -142,14 +151,14 @@ function filterWithTransition(input){
             const before = widthsBefore.get(heading);
             const after = heading.getBoundingClientRect().width;
             if (!before || !after) return;
-            heading.style.setProperty("view-transition-class", "restaurant " + (after >= before ? "grows" : "shrinks"));
+            texts[headings.indexOf(heading)].style.setProperty("view-transition-class", "restaurant " + (after >= before ? "grows" : "shrinks"));
         });
     });
     // A quicker next click takes over the names; only the last transition removes them
     transition.finished.finally(() => {
         if (change !== filterChange) return;
         filterTransition = null;
-        [...headings, ...tags.map(([tag]) => tag)].forEach(element => {
+        [...texts, ...surfaces.map(([surface]) => surface), ...tags.map(([tag]) => tag)].forEach(element => {
             element.style.removeProperty("view-transition-name");
             element.style.removeProperty("view-transition-class");
         });

@@ -124,7 +124,7 @@ body::before,
 .dialog,
 .tag,
 .menu-table__restaurant::before,
-.menu-table__restaurant::after,
+.restaurant__surface,
 .meal--soup::before {
   --glow: circle 75vmax at var(--glow-x) var(--glow-y);
   --page-gradient: radial-gradient(var(--glow), var(--color-bg-alt), var(--color-bg));
@@ -270,14 +270,17 @@ code {
   transform-origin: center;
 }
 
+/* Like a mill in gusts of wind: two turns per cycle that speed up and slow down again (sine
+   easing from Open Props, plain ease-in-out without it), never quite to a stop. On average as
+   fast as before, one turn in 1.4s; two whole turns end where they began, so it loops smoothly. */
 body:has(.loader:not([hidden])) .logo .mill,
 .brand:hover .logo .mill {
-  animation: mill 1.4s linear infinite;
+  animation: mill 2.8s var(--ease-sine-in-out, ease-in-out) infinite;
 }
 
 @keyframes mill {
   to {
-    transform: rotate(360deg);
+    transform: rotate(720deg);
   }
 }
 
@@ -906,36 +909,40 @@ td {
   border: 0;
 }
 
-/* Column heads: restaurant name, address, link, update time. A surface (the swapped gradient)
-   behind them (::after) with no hard edge: it reaches a little past the head and fades out into
-   the page on every side, so the head blends into it and the dishes passing under the stuck row
-   fade out instead of touching its edge. The mask crosses two fades, so the corners soften too.
-   Under it, a strip of the page gradient (::before) covers the dishes that scroll up past the
-   stuck row; unstuck it matches the page, so only the soft edge shows over it. The layers drift
-   with the background, not the head, so the head itself is not restyled on every frame. */
-/* The black line on top is drawn by the layer too, not by the border (which keeps its room, but
-   transparent): while the restaurants are switched (motion.js) each head paints as a group of
-   its own, and there the layer would cover the border and the line would vanish. */
+/* Column heads: restaurant name, address, link, update time (.restaurant__head). A surface (the
+   swapped gradient) behind them (.restaurant__surface) with no hard edge: it reaches a little past
+   the head and fades out into the page on every side, so the head blends into it and the dishes
+   passing under the stuck row fade out instead of touching its edge. The mask crosses two fades,
+   so the corners soften too. Under it, a strip of the page gradient (::before) covers the dishes
+   that scroll up past the stuck row; unstuck it matches the page, so only the soft edge shows
+   over it. The layers drift with the background, not the head, so the head itself is not
+   restyled on every frame.
+   The surface is an element of its own (empty, hidden from screen readers), not a pseudo-element:
+   while the restaurants are switched (motion.js) it moves as a picture of its own under the text,
+   and its soft edge lies inside its own box. Firefox leaves out whatever reaches past the box of
+   a moving picture, so a soft edge around the head itself would vanish there for the switch.
+   The black line on top is drawn by the surface too, not by the border (which keeps its room, but
+   transparent), so it stretches with the surface. */
 .menu-table__restaurant {
   position: relative;
   padding: var(--space-sm) 0;
   border-top: var(--marker) solid transparent;
 }
 
-.menu-table__restaurant::before,
-.menu-table__restaurant::after {
+.menu-table__restaurant::before {
   content: "";
   position: absolute;
   z-index: -1;
-}
-
-.menu-table__restaurant::before {
   inset: calc(-0.5rem - var(--marker)) 0 auto;
   height: calc(0.5rem + var(--marker));
   background: var(--page-gradient) fixed;
 }
 
-.menu-table__restaurant::after {
+.menu-table__restaurant > .restaurant__surface {
+  position: absolute;
+  z-index: -1;
+  margin: 0;
+  pointer-events: none;
   --fade: 1rem;
   /* One side of the mask: eased, so the edge thins out softly instead of in a straight ramp */
   --fade-side: transparent, rgb(0 0 0 / 0.15) calc(var(--fade) * 0.35), rgb(0 0 0 / 0.6) calc(var(--fade) * 0.7),
@@ -951,7 +958,7 @@ td {
   mask-composite: intersect;
 }
 
-.menu-table__restaurant > * + * {
+.restaurant__head > * + * {
   margin-top: var(--space-xs);
 }
 
@@ -1520,12 +1527,15 @@ html:not(.swup-native).is-animating .transition-main {
   animation: none;
 }
 
-::view-transition-group(.restaurant) {
+/* Each heading moves as two pictures: its text (.restaurant) and under it its surface with the
+   soft edge and the line (.restaurant-surface), on the same path at the same pace */
+::view-transition-group(.restaurant),
+::view-transition-group(.restaurant-surface) {
   animation-duration: 360ms;
   animation-timing-function: var(--ease-in-out);
 }
 
-/* Both pictures of a heading keep their real size from the top left (text never stretches);
+/* Both pictures of the text keep their real size from the top left (text never stretches);
    the moving box shows as much of them as its width at that moment */
 ::view-transition-image-pair(.restaurant) {
   overflow: clip;
@@ -1537,13 +1547,22 @@ html:not(.swup-native).is-animating .transition-main {
   height: auto;
 }
 
+/* The surface has no text, so its pictures simply stretch with the moving box: the soft edge
+   and the line grow or shrink with the heading. In height too: by default the height would keep
+   the picture's proportions, and a surface stretched wider would also grow taller. */
+::view-transition-old(.restaurant-surface),
+::view-transition-new(.restaurant-surface) {
+  height: 100%;
+}
+
 /* A heading that leaves is gone quickly, before the one that stays slides over its place */
-::view-transition-old(.restaurant):only-child {
+::view-transition-old(.restaurant):only-child,
+::view-transition-old(.restaurant-surface):only-child {
   animation-duration: var(--duration-exit);
 }
 
-/* A heading that stays shows only its wider picture inside the moving box, so its line grows or
-   shrinks with the box in solid black and the text does not cross-fade (js/motion.js tells which) */
+/* The text of a heading that stays shows only its wider picture inside the moving box, so it
+   does not cross-fade with itself (js/motion.js tells which) */
 ::view-transition-old(.restaurant.grows),
 ::view-transition-new(.restaurant.shrinks) {
   opacity: 0;
@@ -1799,7 +1818,7 @@ html:not(.swup-native).is-animating .transition-main {
     background: var(--color-bg);
   }
 
-  .menu-table__restaurant::after {
+  .menu-table__restaurant > .restaurant__surface {
     background: var(--line), var(--color-bg-alt);
   }
 

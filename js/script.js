@@ -10,11 +10,18 @@ const localLastRefresh = [new Date("November 1, 2026, 13:00"),//eat
                           new Date("October 26, 2026, 13:00")//fiit
 ]; 
 
+// How many refresh() calls are downloading the menus (pressing "Aktualizovať menu" during the
+// automatic one makes two). While any is, showMenus() leaves the loader on, so a table drawn in
+// the meantime (the one from the page load) does not hide it before the new menus are in.
+let refreshing = 0;
+
 async function refresh(){
     let loader = document.querySelector(".loader")
     if(!loader) return;
     loader.removeAttribute("hidden");
+    refreshing++;
     const results = await Promise.allSettled(webs.map(fetchWeb));
+    refreshing--;
 
     results.forEach((res, i) => {
         if(res.status != "fulfilled") {
@@ -368,6 +375,9 @@ function showMenus(){
                 }   
             }
         });
+    // While refresh() is still downloading, the loader stays: it calls showMenus() again when it
+    // is done. The update time stays too, because a new time also ends the loading (js/motion.js).
+    if (refreshing > 0) return;
     showLastRefresh();
     document.querySelector(".loader").setAttribute("hidden", "true");
     if (typeof showMenu === "function") showMenu();
