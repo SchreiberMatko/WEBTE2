@@ -1363,7 +1363,8 @@ tbody:has(.menu-empty[data-restaurant="Fiit"]) + tbody .menu-table__label[data-r
 
 /* Custom scrollbar (js/scrollbar.js): lies over the page instead of taking width,
    so nothing moves left. It shows for a moment whenever the page scrolls (touch screens too)
-   and stays while the mouse is near the right edge, where it can be dragged.
+   and stays while the mouse is near the right edge. Its thumb can be dragged with a mouse, and
+   with a finger while it shows after scrolling.
    Without the script the normal browser scrollbar stays. */
 
 .has-custom-scrollbar {
@@ -1391,6 +1392,19 @@ tbody:has(.menu-empty[data-restaurant="Fiit"]) + tbody .menu-table__label[data-r
 
 .scrollbar.is-near {
   pointer-events: auto;
+}
+
+/* While it shows after scrolling, the thumb can be grabbed (a finger has no "near"); the empty
+   track still lets touches through, so scrolling the page by its right edge keeps working */
+.scrollbar.is-flashing .scrollbar__thumb {
+  pointer-events: auto;
+}
+
+/* Touch screens: the thumb is as wide as a finger needs (the bar it shows stays as thin) */
+@media (any-pointer: coarse) {
+  .scrollbar {
+    width: var(--target);
+  }
 }
 
 /* Rail: a hairline that draws itself downwards from the top */

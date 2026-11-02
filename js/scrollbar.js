@@ -1,6 +1,7 @@
 // Custom scrollbar: lies over the page (takes no width, so nothing shifts left).
 // It shows for a moment whenever the page scrolls, on touch screens too, and stays
-// while the mouse is near the right edge of the window, where it can be dragged.
+// while the mouse is near the right edge of the window. Its thumb can be dragged with a mouse
+// or a pen, and with a finger while it shows after scrolling.
 // Without this script the page keeps the normal browser scrollbar.
 
 const scrollbar = document.querySelector(".scrollbar");
@@ -51,36 +52,42 @@ function scrollToTrack(clientY, offset, behavior){
 function endDrag(e){
     dragOffset = null;
     scrollbar.classList.remove("is-dragging");
-    setNear(e.clientX >= window.innerWidth - nearDistance);
+    // A finger leaves no pointer near the edge: the scrollbar fades out as after scrolling
+    setNear(e.pointerType !== "touch" && e.clientX >= window.innerWidth - nearDistance);
+    flashScrollbar();
 }
 
 // The browser scrollbar is hidden everywhere, so touch screens don't show two of them
 document.documentElement.classList.add("has-custom-scrollbar");
 
-// Near the edge and dragging only work with a mouse
-if (window.matchMedia("(hover: hover) and (pointer: fine)").matches){
-    document.addEventListener("mousemove", e => setNear(e.clientX >= window.innerWidth - nearDistance));
-    document.addEventListener("mouseout", e => {
-        if (!e.relatedTarget) setNear(false);
-    });
+// Each event says what made it (pointerType), so a laptop with a touch screen still gets the
+// mouse behaviour from its mouse or touchpad (asking the device whether it has a mouse can
+// say no there, and the scrollbar would never show up). Near the edge: a mouse or a pen only.
+document.addEventListener("pointermove", e => {
+    if (e.pointerType !== "touch") setNear(e.clientX >= window.innerWidth - nearDistance);
+});
+document.addEventListener("mouseout", e => {
+    if (!e.relatedTarget) setNear(false);
+});
 
-    scrollThumb.addEventListener("pointerdown", e => {
-        e.preventDefault();
-        dragOffset = e.clientY - scrollThumb.getBoundingClientRect().top;
-        scrollThumb.setPointerCapture(e.pointerId);
-        scrollbar.classList.add("is-dragging");
-    });
-    scrollThumb.addEventListener("pointermove", e => {
-        if (dragOffset !== null) scrollToTrack(e.clientY, dragOffset, "instant");
-    });
-    scrollThumb.addEventListener("pointerup", endDrag);
-    scrollThumb.addEventListener("pointercancel", endDrag);
+// Dragging the thumb: mouse, pen or finger (a finger can reach it while it shows, styles.css)
+scrollThumb.addEventListener("pointerdown", e => {
+    e.preventDefault();
+    dragOffset = e.clientY - scrollThumb.getBoundingClientRect().top;
+    scrollThumb.setPointerCapture(e.pointerId);
+    scrollbar.classList.add("is-dragging");
+    setNear(true);
+});
+scrollThumb.addEventListener("pointermove", e => {
+    if (dragOffset !== null) scrollToTrack(e.clientY, dragOffset, "instant");
+});
+scrollThumb.addEventListener("pointerup", endDrag);
+scrollThumb.addEventListener("pointercancel", endDrag);
 
-    // Click on the empty track: glide there with the thumb centred on the click
-    scrollbar.addEventListener("pointerdown", e => {
-        if (e.target === scrollbar) scrollToTrack(e.clientY, scrollThumb.offsetHeight / 2, "smooth");
-    });
-}
+// Click on the empty track with a mouse or a pen: glide there with the thumb centred on the click
+scrollbar.addEventListener("pointerdown", e => {
+    if (e.target === scrollbar && e.pointerType !== "touch") scrollToTrack(e.clientY, scrollThumb.offsetHeight / 2, "smooth");
+});
 
 // Every scroll moves the thumb and shows the scrollbar for a moment, on every device
 window.addEventListener("scroll", onScroll, { passive: true });
